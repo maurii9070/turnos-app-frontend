@@ -1,23 +1,29 @@
 import { useAuth } from '~/composables/useAuth'
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const { accessToken } = useAuth()
+  const config = useRuntimeConfig()
 
   const api = $fetch.create({
-    baseURL: 'https://api.nuxt.com',
-    onRequest({ request, options, error }) {
+    baseURL: config.public.apiBaseUrl,
+    credentials: 'include',
+    onRequest({ options }) {
       if (accessToken.value) {
-        options.headers.set('Authorization', `Bearer ${accessToken.value}`)
+        const headers = new Headers(options.headers)
+        headers.set('Authorization', `Bearer ${accessToken.value}`)
+        options.headers = headers
       }
     },
     async onResponseError({ response }) {
       if (response.status === 401) {
-        await nuxtApp.runWithContext(() => navigateTo('/login'))
+        const route = useRoute()
+        if (route.path !== '/login') {
+          await navigateTo('/login')
+        }
       }
     },
   })
 
-  // Expose to useNuxtApp().$api
   return {
     provide: {
       api,

@@ -1,0 +1,86 @@
+<script setup lang="ts">
+import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { LoginOutput } from '~/utils/schemas/auth'
+import { loginSchema } from '~/utils/schemas/auth'
+
+definePageMeta({
+  layout: 'auth',
+})
+
+useSeoMeta({
+  title: 'Iniciar sesión',
+  description: 'Ingresá a tu cuenta para continuar',
+})
+
+const toast = useToast()
+const { login } = useAuth()
+
+const fields: AuthFormField[] = [
+  {
+    name: 'dni',
+    type: 'text' as const,
+    label: 'DNI',
+    placeholder: 'Ingresá tu DNI',
+    required: true,
+  },
+  {
+    name: 'password',
+    type: 'password' as const,
+    label: 'Contraseña',
+    placeholder: 'Ingresá tu contraseña',
+    required: true,
+  },
+]
+
+const providers = [
+  {
+    label: 'Google',
+    icon: 'i-simple-icons-google',
+    onClick: () => {
+      toast.add({ title: 'Google', description: 'Inicio de sesión con Google próximamente.' })
+    },
+  },
+]
+
+async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
+  try {
+    await login(payload.data.dni, payload.data.password)
+    toast.add({ title: 'Bienvenido', description: 'Inicio de sesión exitoso.', color: 'success' })
+    await navigateTo('/')
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Error',
+      description: error?.data?.message || 'Credenciales inválidas.',
+      color: 'error',
+    })
+  }
+}
+</script>
+
+<template>
+  <UAuthForm
+    :fields="fields"
+    :schema="loginSchema"
+    title="Iniciar sesión"
+    icon="i-lucide-lock"
+    :providers="providers"
+    :submit="{
+      label: 'Inicar Sesion',
+    }"
+    @submit="onSubmit"
+  >
+    <template #separator>
+      <div class="w-full">
+        <USeparator label="o" />
+      </div>
+    </template>
+
+    <template #description>
+      ¿No tenés cuenta?
+      <ULink to="/registro" class="text-primary font-medium">
+        Registrate
+      </ULink>.
+    </template>
+  </UAuthForm>
+</template>

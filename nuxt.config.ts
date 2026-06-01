@@ -4,4 +4,14 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: 'http://localhost:5092',
+    },
+  },
+  routeRules: {
+    '/registro': { ssr: false },
+    '/login': { ssr: false },
+    '/pacientes/**': { ssr: false },
+  },
 })
