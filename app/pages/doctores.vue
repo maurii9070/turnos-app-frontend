@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   middleware: ['auth', 'role'],
-  allowedRoles: ['Patient'],
+  allowedRoles: ['Doctor'],
   layout: 'dashboard',
 })
 </script>
@@ -9,10 +9,10 @@ definePageMeta({
 <template>
   <div>
     <h1 class="text-xl font-semibold">
-      Pacientes
+      Doctores
     </h1>
     <p class="mt-2 text-muted">
-      Página protegida — el flujo de autenticación funciona correctamente.
+      Página protegida para doctores — el control de roles funciona correctamente.
     </p>
   </div>
 </template>

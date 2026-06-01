@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { UserRole } from '~/types/auth'
 import type { LoginOutput } from '~/utils/schemas/auth'
 import { loginSchema } from '~/utils/schemas/auth'
 
@@ -13,7 +14,7 @@ useSeoMeta({
 })
 
 const toast = useToast()
-const { login } = useAuth()
+const { login, user } = useAuth()
 
 const fields: AuthFormField[] = [
   {
@@ -42,11 +43,19 @@ const providers = [
   },
 ]
 
+const roleRedirects: Record<UserRole, string> = {
+  Patient: '/pacientes',
+  Doctor: '/doctores',
+  Admin: '/admin',
+  SuperAdmin: '/admin',
+}
+
 async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
   try {
     await login(payload.data.dni, payload.data.password)
+    const target = user.value ? roleRedirects[user.value.role] : '/'
     toast.add({ title: 'Bienvenido', description: 'Inicio de sesión exitoso.', color: 'success' })
-    await navigateTo('/')
+    await navigateTo(target)
   }
   catch (error: any) {
     toast.add({

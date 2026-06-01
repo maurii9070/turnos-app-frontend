@@ -13,5 +13,7 @@ export default defineNuxtConfig({
     '/registro': { ssr: false },
     '/login': { ssr: false },
     '/pacientes/**': { ssr: false },
+    '/doctores/**': { ssr: false },
+    '/admin/**': { ssr: false },
   },
 })
