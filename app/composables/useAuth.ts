@@ -1,13 +1,15 @@
-import type { AuthUser, LoginResponse, RegisterPatientRequest, UserRole } from '~/types/auth'
+import type { LoginResponse, RegisterPatientRequest, UserRole } from '~/types/auth'
 
 export function useAuth() {
+  const { $api } = useNuxtApp()
   const accessToken = useState<string | null>('auth:token', () => null)
-  const user = useState<AuthUser | null>('auth:user', () => null)
+  const role = useState<UserRole | null>('auth:role', () => null)
   const isAuthenticated = computed(() => !!accessToken.value)
 
+  const { fetchProfile } = useUsers()
+
   async function login(dni: string, password: string) {
-    const nuxtApp = useNuxtApp()
-    const response = await nuxtApp.$api<{
+    const response = await $api<{
       success: boolean
       message: string
       data: LoginResponse
@@ -16,19 +18,17 @@ export function useAuth() {
       body: { dni, password },
     })
 
-    accessToken.value = response.data.accessToken
-    user.value = {
-      id: '',
-      dni,
-      firstName: '',
-      lastName: '',
-      role: response.data.role,
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Error al iniciar sesión')
     }
+
+    accessToken.value = response.data.accessToken
+    role.value = response.data.role
+    await fetchProfile()
   }
 
   async function register(data: RegisterPatientRequest) {
-    const nuxtApp = useNuxtApp()
-    const response = await nuxtApp.$api<{
+    const response = await $api<{
       success: boolean
       message: string
       data: unknown
@@ -41,15 +41,15 @@ export function useAuth() {
   }
 
   async function logout() {
-    const nuxtApp = useNuxtApp()
     try {
-      await nuxtApp.$api('/api/auth/logout', { method: 'POST' })
+      await $api('/api/auth/logout', { method: 'POST' })
     }
     catch {
       // Backend might error but we still clear local state
     }
     accessToken.value = null
-    user.value = null
+    role.value = null
+    useState<unknown>('auth:user').value = null
   }
 
   async function init() {
@@ -68,13 +68,8 @@ export function useAuth() {
       })
       if (response.success && response.data) {
         accessToken.value = response.data.accessToken
-        user.value = {
-          id: '',
-          dni: '',
-          firstName: '',
-          lastName: '',
-          role: response.data.role,
-        }
+        role.value = response.data.role
+        await fetchProfile()
       }
     }
     catch {
@@ -84,7 +79,7 @@ export function useAuth() {
 
   return {
     accessToken,
-    user,
+    role,
     isAuthenticated,
     login,
     register,

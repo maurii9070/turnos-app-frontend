@@ -14,7 +14,7 @@ useSeoMeta({
 })
 
 const toast = useToast()
-const { login, user } = useAuth()
+const { login, role } = useAuth()
 
 const fields: AuthFormField[] = [
   {
@@ -53,7 +53,7 @@ const roleRedirects: Record<UserRole, string> = {
 async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
   try {
     await login(payload.data.dni, payload.data.password)
-    const target = user.value ? roleRedirects[user.value.role] : '/'
+    const target = role.value ? roleRedirects[role.value] : '/'
     toast.add({ title: 'Bienvenido', description: 'Inicio de sesión exitoso.', color: 'success' })
     await navigateTo(target)
   }

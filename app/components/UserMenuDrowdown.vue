@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
+import { useUsers } from '~/composables/useUsers'
 
-const { user } = useAuth()
+const { user } = useUsers()
 
 const userItems = computed<DropdownMenuItem[][]>(() => [
   [
@@ -21,6 +22,12 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
     },
   ],
 ])
+
+const fullName = computed(() => {
+  if (!user.value)
+    return 'Usuario'
+  return `${user.value.firstName} ${user.value.lastName}`
+})
 </script>
 
 <template>
@@ -30,14 +37,16 @@ const userItems = computed<DropdownMenuItem[][]>(() => [
     :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width) min-w-48' }"
   >
     <UButton
-      v-bind="user"
-      :label="`${user?.firstName} ${user?.lastName}`"
-      trailing-icon="i-lucide-chevrons-up-down"
+      leading-icon="i-lucide-user"
+      :label="fullName"
+      :aria-label="fullName"
+      trailing-icon="i-lucide-chevron-down"
       color="neutral"
       variant="ghost"
-      square
-      class="w-full data-[state=open]:bg-elevated overflow-hidden"
+      class="data-[state=open]:bg-elevated overflow-hidden"
       :ui="{
+        label: 'hidden md:inline-flex',
+        leadingIcon: 'lg:hidden',
         trailingIcon: 'text-dimmed ms-auto',
       }"
     />

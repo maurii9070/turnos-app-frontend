@@ -1,15 +1,15 @@
 import type { UserRole } from '~/types/auth'
 
 export default defineNuxtRouteMiddleware((to) => {
-  const { user } = useAuth()
+  const { role } = useAuth()
   const allowedRoles = to.meta.allowedRoles as UserRole[] | undefined
 
   if (!allowedRoles || allowedRoles.length === 0)
     return
-  if (!user.value)
+  if (!role.value)
     return
 
-  if (!allowedRoles.includes(user.value.role)) {
+  if (!allowedRoles.includes(role.value)) {
     throw createError({
       statusCode: 403,
       statusMessage: 'Acceso denegado',
