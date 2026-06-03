@@ -4,6 +4,9 @@ import type { UserRole } from '~/types/auth'
 import type { LoginOutput } from '~/utils/schemas/auth'
 import { loginSchema } from '~/utils/schemas/auth'
 
+const toast = useToast()
+const { login, role, isAuthenticated } = useAuth()
+
 definePageMeta({
   layout: 'auth',
 })
@@ -13,8 +16,11 @@ useSeoMeta({
   description: 'Ingresá a tu cuenta para continuar',
 })
 
-const toast = useToast()
-const { login, role } = useAuth()
+onMounted(() => {
+  if (isAuthenticated.value) {
+    navigateTo('/dashboard')
+  }
+})
 
 const fields: AuthFormField[] = [
   {

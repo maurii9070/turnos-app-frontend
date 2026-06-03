@@ -36,7 +36,7 @@ const items = computed(() => [
       <template #right>
         <UColorModeButton />
 
-        <UserMenuDrowdown v-if="isProfileLoaded" />
+        <UserMenuDropdown v-if="isProfileLoaded" />
 
         <div v-else class="space-x-2">
           <UButton
