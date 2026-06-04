@@ -1,13 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: 'dashboard',
-  middleware: ['auth'],
-})
-
-useSeoMeta({
-  title: 'Dashboard',
-})
-
 const { user } = useUsers()
 
 const greeting = computed(() => {

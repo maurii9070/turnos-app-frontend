@@ -1,9 +1,30 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
 import { useUsers } from '~/composables/useUsers'
 
 const { user, isProfileLoaded, fetchProfile } = useUsers()
 const { logout } = useAuth()
 const router = useRouter()
+
+const open = ref(true)
+
+const items = computed<NavigationMenuItem[]>(() => [
+  {
+    label: 'Inicio',
+    icon: 'i-lucide-house',
+    to: '/',
+  },
+  {
+    label: 'Editar perfil',
+    icon: 'i-lucide-user-pen',
+    to: '/perfil/editar',
+  },
+  {
+    label: 'Cambiar contraseña',
+    icon: 'i-lucide-key',
+    to: '/perfil/cambiar-password',
+  },
+])
 
 onMounted(async () => {
   if (!isProfileLoaded.value) {
@@ -24,84 +45,85 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="min-h-dvh flex flex-col">
-    <header class="sticky top-0 z-50 border-b border-muted bg-elevated/80 backdrop-blur md:hidden">
-      <div class="flex h-16 items-center justify-between px-4">
-        <NuxtLink to="/">
-          <AppLogo class="w-auto h-5" />
-        </NuxtLink>
+  <div class="flex flex-1 min-h-dvh">
+    <USidebar
+      v-model:open="open"
+      variant="floating"
+      collapsible="icon"
+      :ui="{
+        container: 'h-full',
+        inner: 'bg-elevated/25 divide-transparent',
+        body: 'py-0',
+      }"
+    >
+      <template #header>
+        <div class="flex items-center gap-2 overflow-hidden text-center">
+          <UIcon name="i-lucide-stethoscope" class="size-8" />
+          <span class="font-semibold text-md truncate group-data-[state=collapsed]/sidebar:hidden">
+            Sistema de Turnos
+          </span>
+        </div>
+      </template>
 
-        <UserMenuDropdown
-          v-if="isProfileLoaded && user"
-          trigger="avatar"
-          @logout="handleLogout"
-        />
-      </div>
-    </header>
-
-    <div class="flex flex-1">
-      <aside class="hidden md:flex w-64 flex-col border-r border-muted bg-elevated/50">
-        <div class="flex flex-col items-center p-6 text-center">
+      <template #default="{ state }">
+        <div class="flex flex-col items-center text-center px-4 py-2 overflow-hidden">
           <UAvatar
             :alt="user ? `${user.firstName} ${user.lastName}` : 'Usuario'"
-            size="xl"
-            :ui="{ fallback: 'text-foreground font-semibold bg-primary/10' }"
-            class="mb-3"
+            :size="state === 'collapsed' ? 'md' : 'xl'"
+            :ui="{ fallback: 'text-foreground font-semibold' }"
+            class="mb-2"
           />
-
-          <template v-if="user">
-            <p class="font-semibold text-foreground">
+          <template v-if="state === 'expanded' && user">
+            <p class="font-semibold text-foreground truncate w-full">
               {{ user.firstName }} {{ user.lastName }}
             </p>
-            <p class="mt-0.5 text-sm text-muted">
+            <p class="mt-0.5 text-sm text-muted truncate w-full">
               {{ user.email || 'Sin email' }}
+            </p>
+            <p class="mt-0.5 text-sm text-muted truncate w-full">
+              {{ user.phone || 'Sin teléfono' }}
+            </p>
+            <p v-if="user.role === 'Patient' && user.dateOfBirth" class="mt-0.5 text-sm text-muted truncate w-full">
+              {{ formatDate(new Date(user.dateOfBirth)) }}
             </p>
             <RoleBadge :role="user.role" class="mt-2" />
           </template>
         </div>
 
-        <nav class="flex-1 space-y-1 px-3 pb-6">
-          <UButton
-            icon="i-lucide-user-pen"
-            label="Editar perfil"
-            color="neutral"
-            variant="ghost"
-            block
-            class="justify-start"
-            to="/perfil/editar"
-          />
+        <UNavigationMenu
+          :key="state"
+          :items="items"
+          orientation="vertical"
+          :ui="{ link: 'p-1.5 overflow-hidden' }"
+        />
+      </template>
 
-          <UButton
-            icon="i-lucide-key"
-            label="Cambiar contraseña"
-            color="neutral"
-            variant="ghost"
-            block
-            class="justify-start"
-            to="/perfil/cambiar-password"
-          />
+      <template #footer>
+        <UButton
+          icon="i-lucide-log-out"
+          label="Cerrar Sesion"
+          color="error"
+          variant="ghost"
+          block
+          @click="handleLogout"
+        />
+      </template>
+    </USidebar>
 
-          <div class="pt-4">
-            <USeparator />
-          </div>
+    <div class="flex-1 flex flex-col overflow-hidden lg:peer-data-[variant=floating]:my-4 bg-default">
+      <div class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default">
+        <UButton
+          icon="i-lucide-panel-left"
+          color="neutral"
+          variant="ghost"
+          aria-label="Toggle sidebar"
+          @click="open = !open"
+        />
+      </div>
 
-          <UButton
-            icon="i-lucide-log-out"
-            label="Cerrar sesión"
-            color="error"
-            variant="ghost"
-            block
-            class="justify-start"
-            @click="handleLogout"
-          />
-        </nav>
-      </aside>
-
-      <main class="flex-1 bg-muted/30">
-        <div class="p-6">
-          <slot />
-        </div>
-      </main>
+      <div class="flex-1 p-4 overflow-auto">
+        <slot />
+      </div>
     </div>
   </div>
 </template>

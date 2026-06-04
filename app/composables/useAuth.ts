@@ -56,6 +56,12 @@ export function useAuth() {
     if (accessToken.value)
       return
     const config = useRuntimeConfig()
+    const headers: Record<string, string> = {}
+    if (import.meta.server) {
+      const cookieHeader = useRequestHeaders(['cookie']).cookie
+      if (cookieHeader)
+        headers.cookie = cookieHeader
+    }
     try {
       const response = await $fetch<{
         success: boolean
@@ -65,6 +71,7 @@ export function useAuth() {
         baseURL: config.public.apiBaseUrl,
         method: 'POST',
         credentials: 'include',
+        headers,
       })
       if (response.success && response.data) {
         accessToken.value = response.data.accessToken

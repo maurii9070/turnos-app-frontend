@@ -8,11 +8,15 @@ export default defineNuxtPlugin(() => {
     baseURL: config.public.apiBaseUrl,
     credentials: 'include',
     onRequest({ options }) {
-      if (accessToken.value) {
-        const headers = new Headers(options.headers)
-        headers.set('Authorization', `Bearer ${accessToken.value}`)
-        options.headers = headers
+      const headers = new Headers(options.headers)
+      if (import.meta.server) {
+        const cookieHeader = useRequestHeaders(['cookie']).cookie
+        if (cookieHeader)
+          headers.set('cookie', cookieHeader)
       }
+      if (accessToken.value)
+        headers.set('Authorization', `Bearer ${accessToken.value}`)
+      options.headers = headers
     },
     async onResponseError({ response }) {
       if (response.status === 401) {

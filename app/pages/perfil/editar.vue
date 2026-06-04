@@ -102,21 +102,19 @@ async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
         <UInput v-model="state.dateOfBirth" class="w-full" type="date" />
       </UFormField>
 
-      <div class="flex gap-3 pt-2">
-        <UButton
-          label="Cancelar"
-          color="neutral"
-          variant="outline"
-          class="flex-1"
-          to="/dashboard"
-        />
-        <UButton
-          type="submit"
-          label="Guardar cambios"
-          class="flex-1"
-          :loading="loading"
-        />
-      </div>
+      <UButton
+        type="submit"
+        label="Guardar cambios"
+        class="flex-1"
+        :loading="loading"
+        block
+      />
+
+      <p v-if="user" class="text-center text-sm text-muted">
+        <ULink :to="selectRouteByRole(user.role)" class="font-medium">
+          Volver al Panel de Control
+        </ULink>
+      </p>
     </UForm>
   </div>
 </template>
