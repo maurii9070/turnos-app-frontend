@@ -78,7 +78,6 @@ function getJsDayOfWeek(date: CalendarDate): number {
 }
 
 function isDateUnavailable(date: DateValue): boolean {
-  // date puede ser cualquier subtipo de DateValue; forzamos a CalendarDate
   const calDate = date as CalendarDate
   const dayOfWeek = getJsDayOfWeek(calDate)
 
@@ -95,9 +94,15 @@ function isDateUnavailable(date: DateValue): boolean {
     return true
 
   // Solo filtrar por schedules si ya cargamos datos y hay alguno.
-  // Si no hay schedules (lista vacía), no bloqueamos por este criterio
-  // para evitar que un error/backend vacío deshabilite todo.
   if (schedules.value.length > 0 && !availableWeekDays.value.has(dayOfWeek))
+    return true
+
+  // Deshabilitar fechas con availability específica bloqueada
+  const dateStr = normalizeDate(calDate.toString())
+  const blockedAvailability = availabilities.value.some(
+    a => normalizeDate(a.date) === dateStr && !a.isAvailable,
+  )
+  if (blockedAvailability)
     return true
 
   return false
