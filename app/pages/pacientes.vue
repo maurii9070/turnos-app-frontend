@@ -108,7 +108,7 @@ function confirmarTurno() {
       </template>
 
       <template #fecha>
-        <StepSelectDate v-model:fecha="turnoData.fecha" v-model:hora="turnoData.hora" @next="nextStep" @back="prevStep" />
+        <StepSelectDate v-model:fecha="turnoData.fecha" v-model:hora="turnoData.hora" :doctor-id="turnoData.doctor" @next="nextStep" @back="prevStep" />
       </template>
 
       <template #pago>
