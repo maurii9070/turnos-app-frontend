@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { StepperItem } from '@nuxt/ui'
+import type { PaymentMethod } from '~/types/appointments'
 
 definePageMeta({
   middleware: ['auth', 'role'],
@@ -15,7 +16,7 @@ const turnoData = ref({
   doctor: null as string | null,
   fecha: null as string | null,
   hora: null as string | null,
-  pago: null as string | null,
+  pago: null as PaymentMethod | null,
 })
 
 const items = ref<StepperItem[]>([

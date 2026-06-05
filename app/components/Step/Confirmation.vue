@@ -28,9 +28,9 @@ const fechaMap: Record<string, string> = {
 }
 
 const pagoMap: Record<string, string> = {
-  'efectivo': 'Efectivo',
-  'tarjeta': 'Tarjeta de crédito/débito',
-  'mercado-pago': 'Mercado Pago',
+  'Cash': 'Efectivo',
+  'Transfer': 'Transferencia',
+  'MercadoPago': 'Mercado Pago',
 }
 </script>
 
