@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { StepperItem } from '@nuxt/ui'
 import type { PaymentMethod } from '~/types/appointments'
+import type { DoctorListItem } from '~/types/doctors'
 
 definePageMeta({
   middleware: ['auth', 'role'],
@@ -10,6 +11,14 @@ definePageMeta({
 
 const toast = useToast()
 const currentStep = ref(0)
+
+const { createAppointment } = useAppointments()
+const { createPayment } = usePayments()
+
+const isSubmitting = ref(false)
+const submitError = ref<string | null>(null)
+
+const selectedDoctorInfo = ref<DoctorListItem | null>(null)
 
 // Estado compartido entre pasos
 const turnoData = ref({
@@ -46,6 +55,10 @@ const items = ref<StepperItem[]>([
   },
 ])
 
+function onSelectDoctor(doctor: DoctorListItem) {
+  selectedDoctorInfo.value = doctor
+}
+
 function canAdvance(stepIndex: number): boolean {
   switch (stepIndex) {
     case 0:
@@ -77,19 +90,51 @@ function prevStep() {
     currentStep.value--
 }
 
-function confirmarTurno() {
-  toast.add({
-    title: 'Turno confirmado',
-    description: 'Tu turno fue reservado con éxito.',
-    color: 'success',
-  })
-  // Resetear el wizard
-  currentStep.value = 0
-  turnoData.value = {
-    doctor: null,
-    fecha: null,
-    hora: null,
-    pago: null,
+async function confirmarTurno() {
+  if (!turnoData.value.doctor || !turnoData.value.fecha || !turnoData.value.hora || !turnoData.value.pago) {
+    return
+  }
+
+  submitError.value = null
+  isSubmitting.value = true
+
+  try {
+    const appointment = await createAppointment({
+      doctorId: turnoData.value.doctor,
+      date: turnoData.value.fecha,
+      startTime: turnoData.value.hora,
+    })
+
+    await createPayment(appointment.id, {
+      method: turnoData.value.pago,
+    })
+
+    toast.add({
+      title: 'Turno confirmado',
+      description: 'Tu turno fue reservado con éxito.',
+      color: 'success',
+    })
+
+    currentStep.value = 0
+    turnoData.value = {
+      doctor: null,
+      fecha: null,
+      hora: null,
+      pago: null,
+    }
+    selectedDoctorInfo.value = null
+  }
+  catch (err: any) {
+    const message = err.message ?? 'Error al confirmar el turno'
+    submitError.value = message
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
+  finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -105,7 +150,7 @@ function confirmarTurno() {
       class="w-full"
     >
       <template #doctor>
-        <StepSelectDoctor v-model="turnoData.doctor" @next="nextStep" />
+        <StepSelectDoctor v-model="turnoData.doctor" @next="nextStep" @select="onSelectDoctor" />
       </template>
 
       <template #fecha>
@@ -117,7 +162,14 @@ function confirmarTurno() {
       </template>
 
       <template #confirmacion>
-        <StepConfirmation :data="turnoData" @back="prevStep" @confirm="confirmarTurno" />
+        <StepConfirmation
+          :data="turnoData"
+          :doctor-info="selectedDoctorInfo"
+          :is-submitting="isSubmitting"
+          :submit-error="submitError"
+          @back="prevStep"
+          @confirm="confirmarTurno"
+        />
       </template>
     </UStepper>
   </div>

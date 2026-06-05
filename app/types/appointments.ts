@@ -79,15 +79,32 @@ export type PaymentMethod = 'MercadoPago' | 'Transfer' | 'Cash'
 
 export type PaymentStatus = 'Pending' | 'Approved' | 'Rejected'
 
-export interface PaymentInfo {
+export interface CreatePaymentRequest {
+  method: PaymentMethod
+  receiptUrl?: string | null
+}
+
+export interface CreatePaymentResponse {
   id: string
   appointmentId: string
   amount: number
-  method: PaymentMethod
-  status: PaymentStatus
+  method: string
+  status: string
   receiptUrl: string | null
-  paymentDeadline: string | null
-  paidAt: string | null
   createdAt: string
+}
+
+export interface UpdatePaymentStatusRequest {
+  status: PaymentStatus
+}
+
+export interface UpdatePaymentStatusResponse {
+  id: string
+  appointmentId: string
+  amount: number
+  method: string
+  status: string
+  receiptUrl: string | null
+  paidAt: string | null
   updatedAt: string
 }

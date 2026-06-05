@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
   'next': []
+  'select': [doctor: DoctorListItem]
 }>()
 
 const { fetchSpecialties } = useSpecialties()
@@ -43,6 +44,10 @@ async function loadDoctors(specialtyId?: string | null) {
 
 function selectDoctor(doctorId: string) {
   emit('update:modelValue', doctorId)
+  const doctor = doctors.value.find(d => d.doctorId === doctorId)
+  if (doctor) {
+    emit('select', doctor)
+  }
 }
 
 function handleNext() {

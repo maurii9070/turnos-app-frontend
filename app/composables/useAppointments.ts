@@ -1,4 +1,3 @@
-import type { ApiResponse } from '~/types/auth'
 import type {
   AppointmentActionResponse,
   AppointmentDetail,
@@ -8,6 +7,7 @@ import type {
   CreateAppointmentResponse,
   MyAppointmentListItem,
 } from '~/types/appointments'
+import type { ApiResponse } from '~/types/auth'
 
 export function useAppointments() {
   const { $api } = useNuxtApp()
