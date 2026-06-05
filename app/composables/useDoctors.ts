@@ -1,5 +1,5 @@
 import type { ApiResponse } from '~/types/auth'
-import type { DoctorDetail, DoctorListItem } from '~/types/doctors'
+import type { DoctorAppointment, DoctorDetail, DoctorListItem } from '~/types/doctors'
 
 export function useDoctors() {
   const { $api } = useNuxtApp()
@@ -40,9 +40,32 @@ export function useDoctors() {
     }
   }
 
+  async function fetchDoctorAppointments(
+    doctorId: string,
+    date: string,
+  ): Promise<DoctorAppointment[]> {
+    loading.value = true
+    try {
+      const response = await $api<ApiResponse<DoctorAppointment[]>>(
+        `/api/doctors/${doctorId}/appointments?date=${date}`,
+      )
+      if (
+        !response.success
+        || !response.data
+      ) {
+        throw new Error(response.message ?? 'Error al obtener los turnos del doctor')
+      }
+      return response.data
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     fetchDoctors,
     fetchDoctorById,
+    fetchDoctorAppointments,
   }
 }

@@ -30,6 +30,13 @@ export interface DoctorListItem {
   consultationPrice: number
 }
 
+export interface DoctorAppointment {
+  id: string
+  date: string
+  startTime: string
+  status: string
+}
+
 export interface DoctorDetail {
   doctorId: string
   userId: string

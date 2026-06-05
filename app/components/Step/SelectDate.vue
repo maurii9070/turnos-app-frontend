@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CalendarDate, DateValue } from '@internationalized/date'
-import type { DoctorAvailability, DoctorSchedule } from '~/types/doctors'
+import type { DoctorAppointment, DoctorAvailability, DoctorSchedule } from '~/types/doctors'
 import { getLocalTimeZone, today } from '@internationalized/date'
 
 const props = defineProps<{
@@ -18,11 +18,14 @@ const emit = defineEmits<{
 
 const { fetchSchedules, loading: schedulesLoading } = useDoctorSchedules()
 const { fetchAvailabilities, loading: availabilitiesLoading } = useDoctorAvailabilities()
+const { fetchDoctorAppointments } = useDoctors()
 
 const schedules = ref<DoctorSchedule[]>([])
 const availabilities = ref<DoctorAvailability[]>([])
 const isLoading = ref(false)
 const loadError = ref<string | null>(null)
+const existingAppointments = ref<DoctorAppointment[]>([])
+const appointmentsLoading = ref(false)
 
 const selectedDate = ref<CalendarDate | null>(null)
 const selectedTime = ref<string | null>(props.hora)
@@ -116,6 +119,10 @@ function normalizeDate(dateStr: string | undefined): string {
   return dateStr.split('T')[0]?.split(' ')[0] ?? ''
 }
 
+const occupiedTimes = computed(() =>
+  new Set(existingAppointments.value.map(a => a.startTime)),
+)
+
 const jsDayToName: Record<number, string> = {
   0: 'Sunday',
   1: 'Monday',
@@ -138,7 +145,7 @@ const availableSlotsForSelectedDate = computed(() => {
     a => normalizeDate(a.date) === dateStr,
   )
 
-  const slots: { time: string, label: string }[] = []
+  const slots: { time: string, label: string, occupied: boolean }[] = []
 
   // 2. Si hay availabilities para esta fecha, usar esas (prioridad)
   if (dayAvailabilities.length > 0) {
@@ -163,6 +170,7 @@ const availableSlotsForSelectedDate = computed(() => {
         slots.push({
           time: timeStr,
           label: `${timeStr} hs`,
+          occupied: occupiedTimes.value.has(timeStr),
         })
 
         currentMinute += 30
@@ -198,6 +206,7 @@ const availableSlotsForSelectedDate = computed(() => {
       slots.push({
         time: timeStr,
         label: `${timeStr} hs`,
+        occupied: occupiedTimes.value.has(timeStr),
       })
 
       currentMinute += 30
@@ -223,11 +232,24 @@ function parseTime(timeStr: string): { hour: number, minute: number } | null {
   return { hour, minute }
 }
 
-function onDateSelect(date: CalendarDate) {
+async function onDateSelect(date: CalendarDate) {
   selectedDate.value = date
   selectedTime.value = null
   emit('update:fecha', date.toString())
   emit('update:hora', null)
+
+  if (props.doctorId) {
+    appointmentsLoading.value = true
+    try {
+      existingAppointments.value = await fetchDoctorAppointments(props.doctorId, date.toString())
+    }
+    catch {
+      existingAppointments.value = []
+    }
+    finally {
+      appointmentsLoading.value = false
+    }
+  }
 }
 
 function selectTime(time: string) {
@@ -244,6 +266,7 @@ function handleNext() {
 watch(() => props.doctorId, () => {
   selectedDate.value = null
   selectedTime.value = null
+  existingAppointments.value = []
   emit('update:fecha', null)
   emit('update:hora', null)
   loadData()
@@ -318,10 +341,13 @@ watch(() => props.doctorId, () => {
               v-for="slot in availableSlotsForSelectedDate"
               :key="slot.time"
               type="button"
+              :disabled="slot.occupied"
               class="rounded-lg border px-3 py-2 text-sm transition-colors"
-              :class="selectedTime === slot.time
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-muted bg-default hover:bg-elevated'"
+              :class="slot.occupied
+                ? 'border-muted bg-muted/20 text-muted cursor-not-allowed line-through'
+                : selectedTime === slot.time
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-muted bg-default hover:bg-elevated'"
               @click="selectTime(slot.time)"
             >
               {{ slot.label }}
