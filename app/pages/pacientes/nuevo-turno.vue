@@ -20,7 +20,6 @@ const submitError = ref<string | null>(null)
 
 const selectedDoctorInfo = ref<DoctorListItem | null>(null)
 
-// Estado compartido entre pasos
 const turnoData = ref({
   doctor: null as string | null,
   fecha: null as string | null,
@@ -133,37 +132,91 @@ async function confirmarTurno() {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <InitialGreeting />
+  <div class="mx-auto max-w-4xl space-y-8">
+    <div class="flex flex-col gap-1">
+      <h1 class="text-2xl font-semibold tracking-tight">
+        Nuevo turno
+      </h1>
+      <p class="text-muted">
+        Completá los pasos para reservar tu turno médico.
+      </p>
+    </div>
 
-    <UStepper
-      v-model="currentStep"
-      :items="items"
-      orientation="horizontal"
-      class="w-full"
-    >
-      <template #doctor>
-        <StepSelectDoctor v-model="turnoData.doctor" @next="nextStep" @select="onSelectDoctor" />
-      </template>
+    <div class="rounded-xl border border-default bg-elevated/25 p-6 md:p-8">
+      <UStepper
+        v-model="currentStep"
+        :items="items"
+        orientation="horizontal"
+        :ui="{
+          wrapper: 'mt-2.5 max-sm:hidden',
+          description: 'max-md:hidden',
+          title: 'text-sm max-sm:text-xs',
+        }"
+      >
+        <template #doctor>
+          <Transition name="step" mode="out-in">
+            <StepSelectDoctor
+              key="doctor"
+              v-model="turnoData.doctor"
+              @next="nextStep"
+              @select="onSelectDoctor"
+            />
+          </Transition>
+        </template>
 
-      <template #fecha>
-        <StepSelectDate v-model:fecha="turnoData.fecha" v-model:hora="turnoData.hora" :doctor-id="turnoData.doctor" @next="nextStep" @back="prevStep" />
-      </template>
+        <template #fecha>
+          <Transition name="step" mode="out-in">
+            <StepSelectDate
+              key="fecha"
+              v-model:fecha="turnoData.fecha"
+              v-model:hora="turnoData.hora"
+              :doctor-id="turnoData.doctor"
+              @next="nextStep"
+              @back="prevStep"
+            />
+          </Transition>
+        </template>
 
-      <template #pago>
-        <StepSelectPayment v-model="turnoData.pago" @next="nextStep" @back="prevStep" />
-      </template>
+        <template #pago>
+          <Transition name="step" mode="out-in">
+            <StepSelectPayment
+              key="pago"
+              v-model="turnoData.pago"
+              @next="nextStep"
+              @back="prevStep"
+            />
+          </Transition>
+        </template>
 
-      <template #confirmacion>
-        <StepConfirmation
-          :data="turnoData"
-          :doctor-info="selectedDoctorInfo"
-          :is-submitting="isSubmitting"
-          :submit-error="submitError"
-          @back="prevStep"
-          @confirm="confirmarTurno"
-        />
-      </template>
-    </UStepper>
+        <template #confirmacion>
+          <Transition name="step" mode="out-in">
+            <StepConfirmation
+              key="confirmacion"
+              :data="turnoData"
+              :doctor-info="selectedDoctorInfo"
+              :is-submitting="isSubmitting"
+              :submit-error="submitError"
+              @back="prevStep"
+              @confirm="confirmarTurno"
+            />
+          </Transition>
+        </template>
+      </UStepper>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.step-enter-active,
+.step-leave-active {
+  transition: all 0.25s ease;
+}
+.step-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+.step-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+</style>

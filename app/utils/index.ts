@@ -6,6 +6,12 @@ export const { format: formatDate } = new Intl.DateTimeFormat('es-AR', {
   day: '2-digit',
 })
 
+export const { format: formatCurrency } = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 0,
+})
+
 export function selectRouteByRole(role: UserRole) {
   switch (role) {
     case 'Patient':

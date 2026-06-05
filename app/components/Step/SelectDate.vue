@@ -77,30 +77,25 @@ async function loadData() {
 
 function getJsDayOfWeek(date: CalendarDate): number {
   const jsDate = date.toDate(getLocalTimeZone())
-  return jsDate.getDay() // 0=Sunday, 1=Monday, ..., 6=Saturday
+  return jsDate.getDay()
 }
 
 function isDateUnavailable(date: DateValue): boolean {
   const calDate = date as CalendarDate
   const dayOfWeek = getJsDayOfWeek(calDate)
 
-  // No permitir fechas pasadas
   if (calDate.compare(now) < 0)
     return true
 
-  // No permitir fechas más allá de 2 meses
   if (calDate.compare(twoMonthsLater) > 0)
     return true
 
-  // Deshabilitar fines de semana (sábado=6, domingo=0)
   if (dayOfWeek === 0 || dayOfWeek === 6)
     return true
 
-  // Solo filtrar por schedules si ya cargamos datos y hay alguno.
   if (schedules.value.length > 0 && !availableWeekDays.value.has(dayOfWeek))
     return true
 
-  // Deshabilitar fechas con availability específica bloqueada
   const dateStr = normalizeDate(calDate.toString())
   const blockedAvailability = availabilities.value.some(
     a => normalizeDate(a.date) === dateStr && !a.isAvailable,
@@ -112,8 +107,6 @@ function isDateUnavailable(date: DateValue): boolean {
 }
 
 function normalizeDate(dateStr: string | undefined): string {
-  // El backend puede devolver '2026-06-05T00:00:00.000Z' o '2026-06-05'
-  // Nos quedamos solo con la parte YYYY-MM-DD
   if (!dateStr)
     return ''
   return dateStr.split('T')[0]?.split(' ')[0] ?? ''
@@ -140,14 +133,12 @@ const availableSlotsForSelectedDate = computed(() => {
   const dateStr = normalizeDate(selectedDate.value.toString())
   const dayOfWeek = getJsDayOfWeek(selectedDate.value)
 
-  // 1. Buscar availabilities específicas para esta fecha
   const dayAvailabilities = availabilities.value.filter(
     a => normalizeDate(a.date) === dateStr,
   )
 
   const slots: { time: string, label: string, occupied: boolean }[] = []
 
-  // 2. Si hay availabilities para esta fecha, usar esas (prioridad)
   if (dayAvailabilities.length > 0) {
     for (const avail of dayAvailabilities) {
       if (!avail.isAvailable)
@@ -184,7 +175,6 @@ const availableSlotsForSelectedDate = computed(() => {
     return slots.sort((a, b) => a.time.localeCompare(b.time))
   }
 
-  // 3. Si no hay availabilities específicas, usar schedules como fallback
   const dayName = jsDayToName[dayOfWeek]
   const daySchedules = schedules.value.filter(s => s.dayOfWeek === dayName)
 
@@ -217,7 +207,6 @@ const availableSlotsForSelectedDate = computed(() => {
     }
   }
 
-  // Ordenar cronológicamente
   return slots.sort((a, b) => a.time.localeCompare(b.time))
 })
 
@@ -274,12 +263,11 @@ watch(() => props.doctorId, () => {
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-6">
     <h2 class="text-lg font-semibold text-default">
       Seleccioná fecha y hora
     </h2>
 
-    <!-- Error global -->
     <UAlert
       v-if="loadError"
       color="error"
@@ -288,53 +276,63 @@ watch(() => props.doctorId, () => {
       class="mb-4"
     />
 
-    <!-- Loading -->
-    <div v-if="isLoading || schedulesLoading || availabilitiesLoading" class="flex items-center justify-center py-12">
-      <USkeleton class="size-8" />
+    <div v-if="isLoading || schedulesLoading || availabilitiesLoading" class="flex items-center justify-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <USkeleton class="size-10 rounded-full" />
+        <USkeleton class="h-4 w-40" />
+      </div>
     </div>
 
-    <!-- Layout calendario + horarios -->
-    <div v-else class="flex flex-col gap-6 lg:flex-row">
+    <div v-else class="flex flex-col gap-8 lg:flex-row">
       <!-- Calendario -->
-      <div class="flex-1">
-        <UCalendar
-          v-model="selectedDate"
-          :min-value="now"
-          :max-value="twoMonthsLater"
-          :is-date-unavailable="isDateUnavailable"
-          @update:model-value="onDateSelect"
-        />
+      <div class="w-full lg:w-auto">
+        <div class="rounded-xl border border-default bg-default p-4">
+          <UCalendar
+            v-model="selectedDate"
+            :min-value="now"
+            :max-value="twoMonthsLater"
+            :is-date-unavailable="isDateUnavailable"
+            @update:model-value="onDateSelect"
+          />
+        </div>
       </div>
 
       <!-- Horarios -->
       <div class="flex-1">
         <div
           v-if="!selectedDate"
-          class="flex h-full min-h-50 items-center justify-center rounded-lg border border-dashed border-muted p-8"
+          class="flex h-full min-h-48 items-center justify-center rounded-xl border-2 border-dashed border-muted/50 p-8"
         >
           <div class="text-center">
-            <UIcon name="i-lucide-calendar" class="mx-auto size-8 text-muted" />
-            <p class="mt-2 text-sm text-muted">
-              Seleccioná una fecha para ver los horarios disponibles
+            <UIcon name="i-lucide-calendar" class="mx-auto size-10 text-muted/50" />
+            <p class="mt-3 text-sm font-medium text-muted">
+              Seleccioná una fecha
+            </p>
+            <p class="text-xs text-muted/60">
+              Los horarios disponibles aparecerán acá.
             </p>
           </div>
         </div>
 
         <div
           v-else-if="availableSlotsForSelectedDate.length === 0"
-          class="flex h-full min-h-50 items-center justify-center rounded-lg border border-dashed border-muted p-8"
+          class="flex h-full min-h-48 items-center justify-center rounded-xl border-2 border-dashed border-muted/50 p-8"
         >
           <div class="text-center">
-            <UIcon name="i-lucide-clock" class="mx-auto size-8 text-muted" />
-            <p class="mt-2 text-sm text-muted">
-              No hay horarios disponibles para esta fecha
+            <UIcon name="i-lucide-clock" class="mx-auto size-10 text-muted/50" />
+            <p class="mt-3 text-sm font-medium text-muted">
+              Sin horarios disponibles
+            </p>
+            <p class="text-xs text-muted/60">
+              Probá con otra fecha.
             </p>
           </div>
         </div>
 
-        <div v-else class="space-y-3">
-          <h3 class="text-base font-semibold text-default">
+        <div v-else class="space-y-4">
+          <h3 class="text-sm font-semibold text-default">
             Horarios disponibles
+            <span class="font-normal text-muted">· {{ availableSlotsForSelectedDate.length }} turnos</span>
           </h3>
           <div class="flex flex-wrap gap-2">
             <button
@@ -342,12 +340,12 @@ watch(() => props.doctorId, () => {
               :key="slot.time"
               type="button"
               :disabled="slot.occupied"
-              class="rounded-lg border px-3 py-2 text-sm transition-colors"
+              class="rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-150"
               :class="slot.occupied
-                ? 'border-muted bg-muted/20 text-muted cursor-not-allowed line-through'
+                ? 'cursor-not-allowed border-muted/30 bg-muted/10 text-muted/40 line-through'
                 : selectedTime === slot.time
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-muted bg-default hover:bg-elevated'"
+                  ? 'border-primary/50 bg-primary/5 text-primary ring-2 ring-primary/20'
+                  : 'border-default bg-default text-default hover:border-primary/30 hover:text-primary active:scale-[0.97]'"
               @click="selectTime(slot.time)"
             >
               {{ slot.label }}
@@ -357,16 +355,19 @@ watch(() => props.doctorId, () => {
       </div>
     </div>
 
-    <div class="flex justify-between pt-4">
+    <div class="flex justify-between border-t border-default pt-6">
       <UButton
         label="Volver"
         variant="ghost"
         color="neutral"
+        icon="i-lucide-arrow-left"
         @click="emit('back')"
       />
       <UButton
         label="Continuar"
         color="primary"
+        size="lg"
+        trailing-icon="i-lucide-arrow-right"
         :disabled="!fecha || !hora"
         @click="handleNext"
       />

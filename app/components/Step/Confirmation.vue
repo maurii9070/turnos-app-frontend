@@ -44,20 +44,10 @@ function formatDate(dateStr: string | null): string {
     return dateStr
   }
 }
-
-function formatPrice(price: number | undefined): string {
-  if (!price && price !== 0)
-    return ''
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-  }).format(price)
-}
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-6">
     <h2 class="text-lg font-semibold text-default">
       Revisá los datos de tu turno
     </h2>
@@ -69,61 +59,89 @@ function formatPrice(price: number | undefined): string {
       :title="submitError"
     />
 
-    <div class="rounded-lg border border-muted bg-elevated/50 p-4 space-y-3">
-      <div class="flex justify-between">
-        <span class="text-muted">Médico</span>
-        <span class="font-medium text-default text-right">
+    <div class="divide-y divide-default rounded-xl border border-default bg-default">
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon name="i-lucide-user-round" class="size-4" />
+          Médico
+        </span>
+        <span class="text-right text-sm font-medium text-default">
           {{ doctorInfo
             ? `${doctorInfo.firstName} ${doctorInfo.lastName}`
             : data.doctor ?? '-' }}
         </span>
       </div>
-      <div v-if="doctorInfo?.specialtyName" class="flex justify-between">
-        <span class="text-muted">Especialidad</span>
-        <span class="font-medium text-default">{{ doctorInfo.specialtyName }}</span>
+      <div v-if="doctorInfo?.specialtyName" class="flex items-center justify-between px-5 py-4">
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon name="i-lucide-stethoscope" class="size-4" />
+          Especialidad
+        </span>
+        <span class="text-sm font-medium text-default">{{ doctorInfo.specialtyName }}</span>
       </div>
-      <div class="flex justify-between">
-        <span class="text-muted">Fecha</span>
-        <span class="font-medium text-default text-right capitalize">
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon name="i-lucide-calendar" class="size-4" />
+          Fecha
+        </span>
+        <span class="text-right text-sm font-medium capitalize text-default">
           {{ formatDate(data.fecha) }}
         </span>
       </div>
-      <div class="flex justify-between">
-        <span class="text-muted">Horario</span>
-        <span class="font-medium text-default">{{ data.hora ? `${data.hora} hs` : '-' }}</span>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon name="i-lucide-clock" class="size-4" />
+          Horario
+        </span>
+        <span class="text-sm font-medium text-default">{{ data.hora ? `${data.hora} hs` : '-' }}</span>
       </div>
-      <div class="flex justify-between">
-        <span class="text-muted">Pago</span>
-        <span class="font-medium text-default">{{ pagoMap[data.pago ?? ''] ?? data.pago ?? '-' }}</span>
+      <div class="flex items-center justify-between px-5 py-4">
+        <span class="flex items-center gap-2 text-sm text-muted">
+          <UIcon name="i-lucide-credit-card" class="size-4" />
+          Pago
+        </span>
+        <span class="text-sm font-medium text-default">{{ pagoMap[data.pago ?? ''] ?? data.pago ?? '-' }}</span>
       </div>
       <div
         v-if="doctorInfo?.consultationPrice"
-        class="flex justify-between border-t border-muted pt-3"
+        class="flex items-center justify-between bg-primary/5 px-5 py-4"
       >
-        <span class="text-muted">Total</span>
-        <span class="font-semibold text-default">{{ formatPrice(doctorInfo.consultationPrice) }}</span>
+        <span class="flex items-center gap-2 text-sm font-semibold text-default">
+          <UIcon name="i-lucide-wallet" class="size-4" />
+          Total
+        </span>
+        <span class="font-semibold text-default">{{ formatCurrency(doctorInfo.consultationPrice) }}</span>
       </div>
     </div>
 
-    <div v-if="data.pago === 'Cash'" class="rounded-lg border border-muted bg-elevated/50 p-3 text-sm text-muted">
+    <div
+      v-if="data.pago === 'Cash'"
+      class="flex items-start gap-3 rounded-xl border border-muted/50 bg-warning/5 p-4 text-sm text-muted"
+    >
+      <UIcon name="i-lucide-info" class="mt-0.5 size-4 shrink-0 text-warning" />
       <p>Recordá acercarte a la clínica para abonar en efectivo antes de la fecha del turno.</p>
     </div>
 
-    <div v-if="data.pago === 'Transfer'" class="rounded-lg border border-muted bg-elevated/50 p-3 text-sm text-muted">
+    <div
+      v-if="data.pago === 'Transfer'"
+      class="flex items-start gap-3 rounded-xl border border-muted/50 bg-info/5 p-4 text-sm text-muted"
+    >
+      <UIcon name="i-lucide-info" class="mt-0.5 size-4 shrink-0 text-info" />
       <p>Realizá la transferencia a los datos indicados. La secretaria verificará el pago y confirmará tu turno.</p>
     </div>
 
-    <div class="flex justify-between pt-4">
+    <div class="flex justify-between border-t border-default pt-6">
       <UButton
         label="Volver"
         variant="ghost"
         color="neutral"
+        icon="i-lucide-arrow-left"
         :disabled="isSubmitting"
         @click="emit('back')"
       />
       <UButton
         label="Confirmar turno"
         color="success"
+        size="lg"
         icon="i-lucide-check"
         :loading="isSubmitting"
         :disabled="isSubmitting"

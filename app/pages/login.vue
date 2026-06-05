@@ -18,7 +18,7 @@ useSeoMeta({
 
 onMounted(() => {
   if (isAuthenticated.value) {
-    navigateTo('/dashboard')
+    navigateTo(selectRouteByRole(role.value!))
   }
 })
 

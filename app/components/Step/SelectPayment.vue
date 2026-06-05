@@ -58,34 +58,50 @@ function handleNext() {
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-6">
     <h2 class="text-lg font-semibold text-default">
       Seleccioná un método de pago
     </h2>
 
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-3">
       <button
         v-for="method in methods"
         :key="method.id"
         type="button"
-        class="relative flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-colors"
+        class="group relative flex flex-col gap-3 rounded-xl border p-5 text-left transition-all duration-200"
         :class="[
           method.disabled
-            ? 'cursor-not-allowed opacity-50'
+            ? 'cursor-not-allowed border-default/50 bg-muted/5 opacity-60'
             : modelValue === method.id
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-muted bg-default hover:bg-elevated',
+              ? 'border-primary/50 bg-primary/5 ring-2 ring-primary/20'
+              : 'border-default bg-default hover:border-muted hover:shadow-sm active:scale-[0.99]',
         ]"
         :disabled="method.disabled"
         @click="selectMethod(method.id)"
       >
         <div class="flex items-center gap-3">
-          <UIcon :name="method.icon" class="size-5 shrink-0" />
-          <span class="text-sm font-medium">{{ method.label }}</span>
+          <div
+            class="flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors"
+            :class="modelValue === method.id && !method.disabled
+              ? 'bg-primary/10 text-primary'
+              : 'bg-elevated text-muted'"
+          >
+            <UIcon :name="method.icon" class="size-5" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-medium text-default">
+              {{ method.label }}
+            </p>
+          </div>
+          <UIcon
+            v-if="!method.disabled && modelValue === method.id"
+            name="i-lucide-check-circle"
+            class="size-5 shrink-0 text-primary"
+          />
         </div>
-        <span class="mt-1 text-xs text-muted">
+        <p class="text-sm leading-relaxed text-muted">
           {{ method.description }}
-        </span>
+        </p>
         <UBadge
           v-if="method.disabled"
           color="neutral"
@@ -95,43 +111,45 @@ function handleNext() {
         >
           Próximamente
         </UBadge>
-        <UIcon
-          v-if="!method.disabled && modelValue === method.id"
-          name="i-lucide-check"
-          class="absolute right-3 top-3 size-4"
-        />
       </button>
     </div>
 
-    <!-- Info panel: Efectivo -->
     <div
       v-if="modelValue === 'Cash'"
-      class="rounded-lg border border-muted bg-elevated/50 p-4 space-y-2"
+      class="rounded-xl border border-muted/50 bg-warning/5 p-5 space-y-2"
     >
       <div class="flex items-center gap-2 text-sm font-semibold text-default">
-        <UIcon name="i-lucide-info" class="size-4" />
+        <UIcon name="i-lucide-info" class="size-4 text-warning" />
         <span>¿Cómo pagar en efectivo?</span>
       </div>
-      <p class="text-sm text-muted">
+      <p class="text-sm leading-relaxed text-muted">
         Una vez confirmado el turno, deberás acercarte a la clínica para abonar
         en efectivo antes de la fecha del turno. El turno quedará pendiente
         hasta que realices el pago.
       </p>
     </div>
 
-    <!-- Info panel: Transferencia -->
     <div
       v-if="modelValue === 'Transfer'"
-      class="rounded-lg border border-muted bg-elevated/50 p-4 space-y-3"
+      class="rounded-xl border border-muted/50 bg-info/5 p-5 space-y-3"
     >
       <div class="flex items-center gap-2 text-sm font-semibold text-default">
-        <UIcon name="i-lucide-info" class="size-4" />
+        <UIcon name="i-lucide-info" class="size-4 text-info" />
         <span>Datos para la transferencia</span>
       </div>
-      <div class="space-y-1 text-sm text-muted">
-        <p><span class="font-medium text-default">CBU:</span> 0170001234567890123456</p>
-        <p><span class="font-medium text-default">Alias:</span> CLINICA.TURNOS.MEDICOS</p>
-        <p><span class="font-medium text-default">Titular:</span> Clínica Salud Total S.A.</p>
+      <div class="space-y-1.5 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-14 shrink-0 text-muted">CBU:</span>
+          <span class="font-medium text-default">0170001234567890123456</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-14 shrink-0 text-muted">Alias:</span>
+          <span class="font-medium text-default">CLINICA.TURNOS.MEDICOS</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-14 shrink-0 text-muted">Titular:</span>
+          <span class="font-medium text-default">Clínica Salud Total S.A.</span>
+        </div>
 
         <UAlert
           color="warning"
@@ -139,7 +157,7 @@ function handleNext() {
           class="mt-3"
         >
           <template #title>
-            Importante
+            <span class="text-xs font-medium">Importante</span>
           </template>
           <template #description>
             Una vez realizada la transferencia, deberás subir el comprobante
@@ -150,16 +168,19 @@ function handleNext() {
       </div>
     </div>
 
-    <div class="flex justify-between pt-4">
+    <div class="flex justify-between border-t border-default pt-6">
       <UButton
         label="Volver"
         variant="ghost"
         color="neutral"
+        icon="i-lucide-arrow-left"
         @click="emit('back')"
       />
       <UButton
         label="Continuar"
         color="primary"
+        size="lg"
+        trailing-icon="i-lucide-arrow-right"
         :disabled="!modelValue"
         @click="handleNext"
       />
