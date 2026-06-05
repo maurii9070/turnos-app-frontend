@@ -53,7 +53,7 @@ async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
       description: 'Los cambios se guardaron correctamente.',
       color: 'success',
     })
-    await navigateTo('/dashboard')
+    await navigateTo(selectRouteByRole(user.value!.role))
   }
   catch (error: any) {
     const message = error?.data?.message || error?.message || 'Ocurrió un error al actualizar tu perfil.'

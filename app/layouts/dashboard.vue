@@ -8,23 +8,43 @@ const router = useRouter()
 
 const open = ref(true)
 
-const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Inicio',
-    icon: 'i-lucide-house',
-    to: '/',
-  },
-  {
-    label: 'Editar perfil',
-    icon: 'i-lucide-user-pen',
-    to: '/perfil/editar',
-  },
-  {
-    label: 'Cambiar contraseña',
-    icon: 'i-lucide-key',
-    to: '/perfil/cambiar-password',
-  },
-])
+const items = computed<NavigationMenuItem[]>(() => {
+  const navItems: NavigationMenuItem[] = [
+    {
+      label: 'Inicio',
+      icon: 'i-lucide-house',
+      to: '/',
+    },
+  ]
+
+  if (user.value?.role === 'Patient') {
+    navItems.push({
+      label: 'Mis Turnos',
+      icon: 'i-lucide-calendar-check',
+      to: '/pacientes',
+    })
+    navItems.push({
+      label: 'Nuevo Turno',
+      icon: 'i-lucide-plus',
+      to: '/pacientes/nuevo-turno',
+    })
+  }
+
+  navItems.push(
+    {
+      label: 'Editar perfil',
+      icon: 'i-lucide-user-pen',
+      to: '/perfil/editar',
+    },
+    {
+      label: 'Cambiar contraseña',
+      icon: 'i-lucide-key',
+      to: '/perfil/cambiar-password',
+    },
+  )
+
+  return navItems
+})
 
 onMounted(async () => {
   if (!isProfileLoaded.value) {

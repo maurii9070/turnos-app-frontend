@@ -40,7 +40,7 @@ async function onSubmit(event: FormSubmitEvent<ChangePasswordOutput>) {
       description: 'Tu contraseña fue cambiada exitosamente.',
       color: 'success',
     })
-    await navigateTo('/dashboard')
+    await navigateTo(selectRouteByRole(user.value!.role))
   }
   catch (error: any) {
     const message = error?.data?.message || error?.message || 'No se pudo cambiar la contraseña.'

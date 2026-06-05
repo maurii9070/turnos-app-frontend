@@ -115,14 +115,7 @@ async function confirmarTurno() {
       color: 'success',
     })
 
-    currentStep.value = 0
-    turnoData.value = {
-      doctor: null,
-      fecha: null,
-      hora: null,
-      pago: null,
-    }
-    selectedDoctorInfo.value = null
+    await navigateTo('/pacientes')
   }
   catch (err: any) {
     const message = err.message ?? 'Error al confirmar el turno'
