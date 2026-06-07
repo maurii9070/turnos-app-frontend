@@ -12,10 +12,12 @@ export function useAppointmentFiles() {
   ): Promise<UploadAppointmentFileResponse> {
     loading.value = true
     try {
-      const path = `${appointmentId}/${Date.now()}-${file.name}`
+      const path = `${folder}/${appointmentId}/${Date.now()}-${file.name}`
+
+      const bucket = 'appointment-files'
 
       const { error: uploadError } = await $supabase.storage
-        .from(folder)
+        .from(bucket)
         .upload(path, file)
 
       if (uploadError) {
@@ -23,7 +25,7 @@ export function useAppointmentFiles() {
       }
 
       const { data: urlData } = $supabase.storage
-        .from(folder)
+        .from(bucket)
         .getPublicUrl(path)
 
       const response = await $api<ApiResponse<UploadAppointmentFileResponse>>(

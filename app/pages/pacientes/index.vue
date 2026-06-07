@@ -13,6 +13,8 @@ const toast = useToast()
 
 const appointments = ref<MyAppointmentListItem[]>([])
 const error = ref<string | null>(null)
+const selectedAppointmentId = ref<string | null>(null)
+const showUploader = ref(false)
 
 const columns: TableColumn<MyAppointmentListItem>[] = [
   {
@@ -61,6 +63,11 @@ function getStatusLabel(status: string): string {
     Completed: 'Completado',
   }
   return map[status] ?? status
+}
+
+function openUploader(id: string) {
+  selectedAppointmentId.value = id
+  showUploader.value = true
 }
 
 function canCancel(status: string): boolean {
@@ -150,15 +157,25 @@ onMounted(() => {
       </template>
 
       <template #actions-cell="{ row }">
-        <UButton
-          v-if="canCancel(row.original.status)"
-          icon="i-lucide-x"
-          size="sm"
-          color="error"
-          variant="ghost"
-          title="Cancelar turno"
-          @click="handleCancel(row.original.id)"
-        />
+        <div class="flex items-center gap-1">
+          <UButton
+            v-if="row.original.status === 'PendingPayment'"
+            icon="i-lucide-upload"
+            size="sm"
+            variant="ghost"
+            title="Subir comprobante"
+            @click="openUploader(row.original.id)"
+          />
+          <UButton
+            v-if="canCancel(row.original.status)"
+            icon="i-lucide-x"
+            size="sm"
+            color="error"
+            variant="ghost"
+            title="Cancelar turno"
+            @click="handleCancel(row.original.id)"
+          />
+        </div>
       </template>
 
       <template #empty>
@@ -176,5 +193,13 @@ onMounted(() => {
         </div>
       </template>
     </UTable>
+
+    <AppointmentFileUploader
+      v-if="selectedAppointmentId"
+      v-model="showUploader"
+      :appointment-id="selectedAppointmentId"
+      role="patient"
+      @uploaded="loadAppointments()"
+    />
   </div>
 </template>
