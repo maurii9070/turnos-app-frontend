@@ -1,0 +1,56 @@
+import type { UploadAppointmentFileResponse } from '~/types/appointment-files'
+import type { ApiResponse } from '~/types/auth'
+
+export function useAppointmentFiles() {
+  const { $api, $supabase } = useNuxtApp()
+  const loading = useState<boolean>('appointmentFiles:loading', () => false)
+
+  async function uploadFile(
+    appointmentId: string,
+    file: File,
+    folder: 'patient-file' | 'doctor-file',
+  ): Promise<UploadAppointmentFileResponse> {
+    loading.value = true
+    try {
+      const path = `${appointmentId}/${Date.now()}-${file.name}`
+
+      const { error: uploadError } = await $supabase.storage
+        .from(folder)
+        .upload(path, file)
+
+      if (uploadError) {
+        throw new Error(uploadError.message)
+      }
+
+      const { data: urlData } = $supabase.storage
+        .from(folder)
+        .getPublicUrl(path)
+
+      const response = await $api<ApiResponse<UploadAppointmentFileResponse>>(
+        `/api/appointments/${appointmentId}/files`,
+        {
+          method: 'POST',
+          body: {
+            fileName: file.name,
+            fileType: file.type,
+            filePathOrUrl: urlData.publicUrl,
+          },
+        },
+      )
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message ?? 'Error al subir el archivo')
+      }
+
+      return response.data
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    loading,
+    uploadFile,
+  }
+}

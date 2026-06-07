@@ -7,6 +7,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: 'http://localhost:5092',
+      supabaseUrl: '',
+      supabaseKey: '',
     },
   },
   routeRules: {

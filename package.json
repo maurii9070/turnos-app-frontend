@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.8.1",
+    "@supabase/supabase-js": "^2.107.0",
     "nuxt": "^4.4.6",
     "tailwindcss": "^4.3.0",
     "valibot": "^1.4.1",

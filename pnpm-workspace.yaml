@@ -6,3 +6,6 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   vue-demi: true
+
+overrides:
+  semver: ^7.6.3

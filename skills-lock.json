@@ -19,6 +19,12 @@
       "skillPath": "skills/nuxt-ui/SKILL.md",
       "computedHash": "2d58c6092b7028db223a819d5a37badc860a4036ca134a3e457ce7b056562f72"
     },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "d414d598b9428b3e851c4ce61898649906b19e55aa7415bb42a286bd9ca2ab32"
+    },
     "valibot": {
       "source": "open-circle/agent-skills",
       "sourceType": "github",
