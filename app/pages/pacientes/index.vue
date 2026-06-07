@@ -136,7 +136,7 @@ onMounted(() => {
       :loading="loading"
     >
       <template #date-cell="{ row }">
-        {{ formatDate(new Date(`${row.original.date}T12:00:00`)) }}
+        {{ formatIsoDate(row.original.date) }}
       </template>
 
       <template #doctor-cell="{ row }">

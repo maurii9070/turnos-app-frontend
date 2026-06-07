@@ -68,6 +68,7 @@ async function handleLogout() {
   <div class="flex flex-1 min-h-dvh">
     <USidebar
       v-model:open="open"
+      close
       variant="floating"
       collapsible="icon"
       :ui="{
@@ -76,12 +77,22 @@ async function handleLogout() {
         body: 'py-0',
       }"
     >
-      <template #header>
-        <div class="flex items-center gap-2 overflow-hidden text-center">
-          <UIcon name="i-lucide-stethoscope" class="size-8" />
-          <span class="font-semibold text-md truncate group-data-[state=collapsed]/sidebar:hidden">
-            Sistema de Turnos
-          </span>
+      <template #header="{ close }">
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-2 overflow-hidden text-center">
+            <UIcon name="i-lucide-stethoscope" class="size-8" />
+            <span class="font-semibold text-md truncate group-data-[state=collapsed]/sidebar:hidden">
+              Sistema de Turnos
+            </span>
+          </div>
+          <UButton
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            class="lg:hidden"
+            aria-label="Cerrar menú"
+            @click="close"
+          />
         </div>
       </template>
 
@@ -104,7 +115,7 @@ async function handleLogout() {
               {{ user.phone || 'Sin teléfono' }}
             </p>
             <p v-if="user.role === 'Patient' && user.dateOfBirth" class="mt-0.5 text-sm text-muted truncate w-full">
-              {{ formatDate(new Date(user.dateOfBirth)) }}
+              {{ formatIsoDate(user.dateOfBirth) }}
             </p>
             <RoleBadge :role="user.role" class="mt-2" />
           </template>

@@ -26,24 +26,6 @@ const pagoMap: Record<string, string> = {
   Transfer: 'Transferencia',
   MercadoPago: 'Mercado Pago',
 }
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr)
-    return '-'
-  try {
-    const [y, m, d] = dateStr.split('-')
-    const date = new Date(Number(y), Number(m) - 1, Number(d))
-    return new Intl.DateTimeFormat('es-AR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(date)
-  }
-  catch {
-    return dateStr
-  }
-}
 </script>
 
 <template>
@@ -84,7 +66,7 @@ function formatDate(dateStr: string | null): string {
           Fecha
         </span>
         <span class="text-right text-sm font-medium capitalize text-default">
-          {{ formatDate(data.fecha) }}
+          {{ formatIsoDate(data.fecha) }}
         </span>
       </div>
       <div class="flex items-center justify-between px-5 py-4">

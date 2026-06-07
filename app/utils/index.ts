@@ -1,10 +1,19 @@
 import type { UserRole } from '~/types/auth'
 
-export const { format: formatDate } = new Intl.DateTimeFormat('es-AR', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-})
+export function formatIsoDate(dateStr: string | null) {
+  if (!dateStr)
+    return '-'
+
+  const [year, month, day] = dateStr.split('-').map(Number)
+  if (!year || !month || !day)
+    return dateStr
+
+  return new Intl.DateTimeFormat('es-AR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(year, month - 1, day))
+}
 
 export const { format: formatCurrency } = new Intl.NumberFormat('es-AR', {
   style: 'currency',
