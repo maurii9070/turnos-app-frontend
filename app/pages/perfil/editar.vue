@@ -98,7 +98,7 @@ async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
         <UInput v-model="state.phone" class="w-full" type="tel" placeholder="+54 9 11 1234-5678" />
       </UFormField>
 
-      <UFormField name="dateOfBirth" label="Fecha de nacimiento">
+      <UFormField v-if="user?.role === 'Patient'" name="dateOfBirth" label="Fecha de nacimiento">
         <UInput v-model="state.dateOfBirth" class="w-full" type="date" />
       </UFormField>
 

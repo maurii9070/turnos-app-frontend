@@ -37,8 +37,9 @@ const completing = ref(false)
 
 const columns: TableColumn<DoctorMyAppointmentListItem>[] = [
   {
-    accessorKey: 'date',
+    id: 'date',
     header: 'Fecha',
+    accessorFn: row => formatIsoDate(row.date),
   },
   {
     accessorKey: 'startTime',
@@ -47,6 +48,7 @@ const columns: TableColumn<DoctorMyAppointmentListItem>[] = [
   {
     id: 'patient',
     header: 'Paciente',
+    accessorFn: row => `${row.patientFirstName} ${row.patientLastName}`,
   },
   {
     accessorKey: 'status',
@@ -133,6 +135,8 @@ async function handleComplete() {
 onMounted(() => {
   loadAppointments()
 })
+
+const globalFilter = ref('')
 </script>
 
 <template>
@@ -164,7 +168,11 @@ onMounted(() => {
       </template>
     </UAlert>
 
+    <div class="flex px-4 py-3.5 border-b border-accented">
+      <UInput v-model="globalFilter" class="max-w-sm" icon="i-lucide-search" placeholder="Buscar..." />
+    </div>
     <UTable
+      v-model:global-filter="globalFilter"
       :columns="columns"
       :data="appointments"
       :loading="loading"
@@ -187,6 +195,7 @@ onMounted(() => {
         <div class="flex items-center gap-1">
           <UButton
             icon="i-lucide-eye"
+            color="primary"
             label="Ver"
             size="sm"
             variant="ghost"
@@ -195,6 +204,7 @@ onMounted(() => {
           <UButton
             icon="i-lucide-upload"
             label="Subir archivo"
+            color="neutral"
             size="sm"
             variant="ghost"
             @click="openUploader(row.original.id)"
