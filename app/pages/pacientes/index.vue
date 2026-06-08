@@ -1,6 +1,24 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { MyAppointmentListItem } from '~/types/appointments'
+import type { AppointmentStatus, MyAppointmentListItem } from '~/types/appointments'
+
+type StatusColor = 'warning' | 'info' | 'success' | 'error' | 'neutral'
+
+const STATUS_COLOR_MAP: Record<AppointmentStatus, StatusColor> = {
+  PendingPayment: 'warning',
+  PendingReview: 'info',
+  Confirmed: 'success',
+  Cancelled: 'error',
+  Completed: 'neutral',
+}
+
+const STATUS_LABEL_MAP: Record<AppointmentStatus, string> = {
+  PendingPayment: 'Pendiente de pago',
+  PendingReview: 'Pendiente de revisión',
+  Confirmed: 'Confirmado',
+  Cancelled: 'Cancelado',
+  Completed: 'Completado',
+}
 
 definePageMeta({
   middleware: ['auth', 'role'],
@@ -15,6 +33,11 @@ const appointments = ref<MyAppointmentListItem[]>([])
 const error = ref<string | null>(null)
 const selectedAppointmentId = ref<string | null>(null)
 const showUploader = ref(false)
+const showCancelConfirm = ref(false)
+const selectedCancelId = ref<string | null>(null)
+const cancelling = ref(false)
+const showDetail = ref(false)
+const detailAppointmentId = ref<string | null>(null)
 
 const columns: TableColumn<MyAppointmentListItem>[] = [
   {
@@ -43,26 +66,29 @@ const columns: TableColumn<MyAppointmentListItem>[] = [
   },
 ]
 
-function getStatusColor(status: string): 'warning' | 'info' | 'success' | 'error' | 'neutral' {
-  const map: Record<string, 'warning' | 'info' | 'success' | 'error' | 'neutral'> = {
-    PendingPayment: 'warning',
-    PendingReview: 'info',
-    Confirmed: 'success',
-    Cancelled: 'error',
-    Completed: 'neutral',
-  }
-  return map[status] ?? 'neutral'
+function getStatusColor(status: AppointmentStatus): StatusColor {
+  return STATUS_COLOR_MAP[status]
 }
 
-function getStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    PendingPayment: 'Pendiente de pago',
-    PendingReview: 'Pendiente de revisión',
-    Confirmed: 'Confirmado',
-    Cancelled: 'Cancelado',
-    Completed: 'Completado',
-  }
-  return map[status] ?? status
+function getStatusLabel(status: AppointmentStatus): string {
+  return STATUS_LABEL_MAP[status]
+}
+
+function canUpload(row: MyAppointmentListItem): boolean {
+  return row.status === 'PendingPayment' && row.paymentMethod === 'Transfer'
+}
+
+function canCancel(status: AppointmentStatus): boolean {
+  return status === 'PendingPayment'
+}
+
+function canView(status: AppointmentStatus): boolean {
+  return status === 'PendingReview' || status === 'Confirmed' || status === 'Completed'
+}
+
+function openDetail(id: string) {
+  detailAppointmentId.value = id
+  showDetail.value = true
 }
 
 function openUploader(id: string) {
@@ -70,8 +96,9 @@ function openUploader(id: string) {
   showUploader.value = true
 }
 
-function canCancel(status: string): boolean {
-  return status === 'PendingPayment' || status === 'PendingReview'
+function confirmCancel(id: string) {
+  selectedCancelId.value = id
+  showCancelConfirm.value = true
 }
 
 async function loadAppointments() {
@@ -79,15 +106,19 @@ async function loadAppointments() {
   try {
     appointments.value = await fetchMyAppointments()
   }
-  catch (err: any) {
-    error.value = err.message ?? 'Error al cargar los turnos'
+  catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Error al cargar mis turnos'
     appointments.value = []
   }
 }
 
-async function handleCancel(id: string) {
+async function handleCancel() {
+  if (!selectedCancelId.value || cancelling.value)
+    return
+
+  cancelling.value = true
   try {
-    await cancelAppointment(id)
+    await cancelAppointment(selectedCancelId.value)
     toast.add({
       title: 'Turno cancelado',
       description: 'El turno fue cancelado con éxito.',
@@ -95,12 +126,17 @@ async function handleCancel(id: string) {
     })
     await loadAppointments()
   }
-  catch (err: any) {
+  catch (err: unknown) {
     toast.add({
       title: 'Error',
-      description: err.message ?? 'Error al cancelar el turno',
+      description: err instanceof Error ? err.message : 'Error al cancelar el turno',
       color: 'error',
     })
+  }
+  finally {
+    cancelling.value = false
+    showCancelConfirm.value = false
+    selectedCancelId.value = null
   }
 }
 
@@ -135,7 +171,16 @@ onMounted(() => {
       title="Error"
       icon="i-lucide-alert-circle"
       :description="error"
-    />
+    >
+      <template #footer>
+        <UButton
+          label="Reintentar"
+          size="sm"
+          variant="outline"
+          @click="loadAppointments"
+        />
+      </template>
+    </UAlert>
 
     <UTable
       :columns="columns"
@@ -159,21 +204,29 @@ onMounted(() => {
       <template #actions-cell="{ row }">
         <div class="flex items-center gap-1">
           <UButton
-            v-if="row.original.status === 'PendingPayment'"
+            v-if="canUpload(row.original)"
             icon="i-lucide-upload"
+            label="Subir comprobante"
             size="sm"
             variant="ghost"
-            title="Subir comprobante"
             @click="openUploader(row.original.id)"
+          />
+          <UButton
+            v-if="canView(row.original.status)"
+            icon="i-lucide-eye"
+            label="Ver"
+            size="sm"
+            variant="ghost"
+            @click="openDetail(row.original.id)"
           />
           <UButton
             v-if="canCancel(row.original.status)"
             icon="i-lucide-x"
+            label="Cancelar"
             size="sm"
             color="error"
             variant="ghost"
-            title="Cancelar turno"
-            @click="handleCancel(row.original.id)"
+            @click="confirmCancel(row.original.id)"
           />
         </div>
       </template>
@@ -195,11 +248,38 @@ onMounted(() => {
     </UTable>
 
     <AppointmentFileUploader
-      v-if="selectedAppointmentId"
       v-model="showUploader"
-      :appointment-id="selectedAppointmentId"
+      :appointment-id="selectedAppointmentId ?? ''"
       role="patient"
       @uploaded="loadAppointments()"
+    />
+
+    <UModal
+      v-model:open="showCancelConfirm"
+      title="Cancelar turno"
+      description="¿Estás seguro de que querés cancelar este turno? Esta acción no se puede deshacer."
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #footer="{ close }">
+        <UButton
+          label="No, mantener"
+          color="neutral"
+          variant="outline"
+          @click="close"
+        />
+        <UButton
+          label="Sí, cancelar"
+          color="error"
+          :loading="cancelling"
+          @click="handleCancel"
+        />
+      </template>
+    </UModal>
+
+    <AppointmentDetailModal
+      v-if="detailAppointmentId"
+      v-model="showDetail"
+      :appointment-id="detailAppointmentId"
     />
   </div>
 </template>

@@ -32,7 +32,7 @@ const methods: PaymentOption[] = [
     label: 'Transferencia',
     icon: 'i-lucide-building',
     disabled: false,
-    description: 'Transferí el monto del turno y subí el comprobante.',
+    description: 'Transferí el monto y subí el comprobante desde tu listado de turnos.',
   },
   {
     id: 'MercadoPago',
@@ -131,41 +131,21 @@ function handleNext() {
 
     <div
       v-if="modelValue === 'Transfer'"
-      class="rounded-xl border border-muted/50 bg-info/5 p-5 space-y-3"
+      class="rounded-xl border border-muted/50 bg-info/5 p-5"
     >
-      <div class="flex items-center gap-2 text-sm font-semibold text-default">
-        <UIcon name="i-lucide-info" class="size-4 text-info" />
-        <span>Datos para la transferencia</span>
-      </div>
-      <div class="space-y-1.5 text-sm">
-        <div class="flex items-center gap-2">
-          <span class="w-14 shrink-0 text-muted">CBU:</span>
-          <span class="font-medium text-default">0170001234567890123456</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-14 shrink-0 text-muted">Alias:</span>
-          <span class="font-medium text-default">CLINICA.TURNOS.MEDICOS</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-14 shrink-0 text-muted">Titular:</span>
-          <span class="font-medium text-default">Clínica Salud Total S.A.</span>
-        </div>
-
-        <UAlert
-          color="warning"
-          icon="i-lucide-alert-triangle"
-          class="mt-3"
-        >
-          <template #title>
-            <span class="text-xs font-medium">Importante</span>
-          </template>
-          <template #description>
-            Una vez realizada la transferencia, deberás subir el comprobante
-            para que la secretaria verifique el pago. El turno se confirmará
-            cuando el pago sea aprobado.
-          </template>
-        </UAlert>
-      </div>
+      <UAlert
+        color="warning"
+        icon="i-lucide-alert-triangle"
+      >
+        <template #title>
+          <span class="text-xs font-medium">Importante</span>
+        </template>
+        <template #description>
+          Una vez realizada la transferencia, deberás subir el comprobante
+          para que la secretaria verifique el pago. El turno se confirmará
+          cuando el pago sea aprobado.
+        </template>
+      </UAlert>
     </div>
 
     <div class="flex justify-between border-t border-default pt-6">

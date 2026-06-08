@@ -11,7 +11,7 @@ import type { ApiResponse } from '~/types/auth'
 
 export function useAppointments() {
   const { $api } = useNuxtApp()
-  const loading = useState<boolean>('appointments:loading', () => false)
+  const loading = ref(false)
 
   async function createAppointment(data: CreateAppointmentRequest): Promise<CreateAppointmentResponse> {
     loading.value = true

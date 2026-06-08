@@ -108,11 +108,20 @@ async function confirmarTurno() {
       method: turnoData.value.pago,
     })
 
-    toast.add({
-      title: 'Turno confirmado',
-      description: 'Tu turno fue reservado con éxito.',
-      color: 'success',
-    })
+    if (turnoData.value.pago === 'Transfer') {
+      toast.add({
+        title: 'Turno creado',
+        description: 'Subí el comprobante de transferencia desde tu listado de turnos para que sea revisado.',
+        color: 'success',
+      })
+    }
+    else {
+      toast.add({
+        title: 'Turno creado',
+        description: 'Tu turno fue reservado con éxito.',
+        color: 'success',
+      })
+    }
 
     await navigateTo('/pacientes')
   }

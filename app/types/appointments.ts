@@ -13,13 +13,22 @@ export interface CreateAppointmentResponse {
   doctorId: string
   date: string
   startTime: string
-  status: string
+  status: AppointmentStatus
   notes: string | null
 }
 
 export interface AppointmentActionResponse {
   id: string
-  status: string
+  status: AppointmentStatus
+}
+
+export interface AppointmentFileResponse {
+  id: string
+  appointmentId: string
+  filePathOrUrl: string
+  fileName: string
+  fileType: string
+  uploadedAt: string
 }
 
 export interface AppointmentDetail {
@@ -37,8 +46,9 @@ export interface AppointmentDetail {
   consultationPrice: number
   date: string
   startTime: string
-  status: string
+  status: AppointmentStatus
   notes: string | null
+  files: AppointmentFileResponse[]
   createdAt: string
   updatedAt: string
 }
@@ -55,7 +65,7 @@ export interface AppointmentListItem {
   specialtyName: string | null
   date: string
   startTime: string
-  status: string
+  status: AppointmentStatus
   notes: string | null
   createdAt: string
 }
@@ -71,8 +81,9 @@ export interface MyAppointmentListItem {
   patientLastName: string
   date: string
   startTime: string
-  status: string
+  status: AppointmentStatus
   notes: string | null
+  paymentMethod?: PaymentMethod | null
 }
 
 export type PaymentMethod = 'MercadoPago' | 'Transfer' | 'Cash'

@@ -99,6 +99,29 @@ async function handleUpload() {
           :accept="accept"
         />
 
+        <div
+          v-if="role === 'patient'"
+          class="rounded-xl border border-muted/50 bg-elevated p-4 space-y-2 text-sm"
+        >
+          <p class="font-medium text-default">
+            Datos para la transferencia
+          </p>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0 text-muted">CBU:</span>
+              <span class="font-medium text-default">0170001234567890123456</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0 text-muted">Alias:</span>
+              <span class="font-medium text-default">CLINICA.TURNOS.MEDICOS</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-14 shrink-0 text-muted">Titular:</span>
+              <span class="font-medium text-default">Clínica Salud Total S.A.</span>
+            </div>
+          </div>
+        </div>
+
         <UAlert
           v-if="role === 'patient'"
           color="info"

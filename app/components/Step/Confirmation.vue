@@ -108,7 +108,7 @@ const pagoMap: Record<string, string> = {
       class="flex items-start gap-3 rounded-xl border border-muted/50 bg-info/5 p-4 text-sm text-muted"
     >
       <UIcon name="i-lucide-info" class="mt-0.5 size-4 shrink-0 text-info" />
-      <p>Realizá la transferencia a los datos indicados. La secretaria verificará el pago y confirmará tu turno.</p>
+      <p>Una vez creado el turno, realizá la transferencia y subí el comprobante desde tu listado de turnos. La secretaria verificará el pago y confirmará tu turno.</p>
     </div>
 
     <div class="flex justify-between border-t border-default pt-6">
