@@ -56,6 +56,14 @@ const items = computed<NavigationMenuItem[]>(() => {
     })
   }
 
+  if (user.value?.role === 'SuperAdmin') {
+    navItems.push({
+      label: 'Registrar administrador',
+      icon: 'i-lucide-shield-plus',
+      to: '/admin/nuevo-admin',
+    })
+  }
+
   navItems.push(
     {
       label: 'Editar perfil',
