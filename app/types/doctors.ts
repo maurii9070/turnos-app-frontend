@@ -1,3 +1,5 @@
+import type { AppointmentStatus } from './appointments'
+
 export interface SpecialtyInfo {
   id: string
   name: string
@@ -50,4 +52,19 @@ export interface DoctorDetail {
   consultationPrice: number
   schedules: DoctorSchedule[]
   availabilities: DoctorAvailability[]
+}
+
+export interface DoctorMyAppointmentListItem {
+  id: string
+  doctorId: string
+  doctorFirstName: string
+  doctorLastName: string
+  specialtyName: string | null
+  patientId: string
+  patientFirstName: string
+  patientLastName: string
+  date: string
+  startTime: string
+  status: AppointmentStatus
+  notes: string | null
 }
