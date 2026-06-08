@@ -30,6 +30,24 @@ const items = computed<NavigationMenuItem[]>(() => {
     })
   }
 
+  if (user.value?.role === 'Admin' || user.value?.role === 'SuperAdmin') {
+    navItems.push({
+      label: 'Turnos pendientes',
+      icon: 'i-lucide-clock',
+      to: '/admin',
+    })
+    navItems.push({
+      label: 'Registrar paciente',
+      icon: 'i-lucide-user-plus',
+      to: '/admin/nuevo-paciente',
+    })
+    navItems.push({
+      label: 'Buscar paciente',
+      icon: 'i-lucide-search',
+      to: '/admin/buscar-paciente',
+    })
+  }
+
   navItems.push(
     {
       label: 'Editar perfil',

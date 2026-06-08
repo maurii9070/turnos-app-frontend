@@ -105,7 +105,7 @@ async function onSubmit(event: FormSubmitEvent<ChangePasswordOutput>) {
     <UButton type="submit" label="Guardar contraseña" block :loading="loading" />
   </UForm>
 
-  <p v-if="user" class="text-center text-sm text-muted">
+  <p v-if="user && !user.mustChangePassword" class="text-center text-sm text-muted">
     <ULink :to="selectRouteByRole(user.role)" class="font-medium">
       Volver al Panel de Control
     </ULink>
