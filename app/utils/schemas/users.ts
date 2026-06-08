@@ -11,10 +11,10 @@ export const updateProfileSchema = v.object({
     v.nonEmpty('El apellido es obligatorio.'),
     v.maxLength(100, 'El apellido no puede superar los 100 caracteres.'),
   ),
-  email: v.pipe(
-    v.string(),
-    v.email('El email no es válido.'),
-  ),
+  email: v.union([
+    v.literal(''),
+    v.pipe(v.string(), v.email('El email no es válido.')),
+  ]),
   phone: v.optional(v.string()),
   dateOfBirth: v.optional(v.string()),
 })

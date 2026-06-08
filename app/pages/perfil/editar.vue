@@ -90,7 +90,7 @@ async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
         </UFormField>
       </UFieldGroup>
 
-      <UFormField name="email" label="Email" required>
+      <UFormField name="email" label="Email">
         <UInput v-model="state.email" class="w-full" type="email" placeholder="juan@ejemplo.com" />
       </UFormField>
 

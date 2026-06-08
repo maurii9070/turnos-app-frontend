@@ -64,6 +64,11 @@ export function useUsers() {
     if (!response.success) {
       throw new Error(response.message ?? 'Error al cambiar la contraseña')
     }
+
+    const currentUser = user.value
+    if (currentUser) {
+      currentUser.mustChangePassword = false
+    }
   }
 
   function clearProfile() {
