@@ -1,9 +1,22 @@
 <script setup lang="ts">
+import { useAuth } from '~/composables/useAuth'
 import { useUsers } from '~/composables/useUsers'
 
-const { isProfileLoaded } = useUsers()
+const { isAuthenticated, logout } = useAuth()
+const { isProfileLoaded, fetchProfile } = useUsers()
 
 const route = useRoute()
+
+onMounted(async () => {
+  if (isAuthenticated.value && !isProfileLoaded.value) {
+    await fetchProfile()
+  }
+})
+
+async function handleLogout() {
+  await logout()
+  await navigateTo('/login')
+}
 
 const items = computed(() => [
   {
@@ -36,7 +49,7 @@ const items = computed(() => [
       <template #right>
         <UColorModeButton />
 
-        <UserMenuDropdown v-if="isProfileLoaded" />
+        <UserMenuDropdown v-if="isProfileLoaded" @logout="handleLogout" />
 
         <div v-else class="space-x-2">
           <UButton

@@ -12,11 +12,59 @@ const emit = defineEmits<{
 
 const { user } = useUsers()
 
+const roleItems = computed<DropdownMenuItem[]>(() => {
+  if (!user.value)
+    return []
+
+  const items: DropdownMenuItem[] = []
+
+  if (user.value.role === 'Patient') {
+    items.push(
+      {
+        label: 'Mis Turnos',
+        icon: 'i-lucide-calendar-check',
+        to: '/pacientes',
+      },
+      {
+        label: 'Nuevo Turno',
+        icon: 'i-lucide-plus',
+        to: '/pacientes/nuevo-turno',
+      },
+    )
+  }
+
+  if (user.value.role === 'Doctor') {
+    items.push({
+      label: 'Mis Turnos',
+      icon: 'i-lucide-calendar-check',
+      to: '/doctores',
+    })
+  }
+
+  if (user.value.role === 'Admin' || user.value.role === 'SuperAdmin') {
+    items.push({
+      label: 'Panel de administración',
+      icon: 'i-lucide-shield',
+      to: '/admin',
+    })
+  }
+
+  if (user.value.role === 'SuperAdmin') {
+    items.push({
+      label: 'Registrar administrador',
+      icon: 'i-lucide-shield-plus',
+      to: '/admin/nuevo-admin',
+    })
+  }
+
+  return items
+})
+
 const userItems = computed<DropdownMenuItem[][]>(() => {
   if (!user.value)
     return []
 
-  return [
+  const groups: DropdownMenuItem[][] = [
     [
       {
         label: `${user.value.firstName} ${user.value.lastName}`,
@@ -28,6 +76,13 @@ const userItems = computed<DropdownMenuItem[][]>(() => {
         icon: 'i-lucide-mail',
       },
     ],
+  ]
+
+  if (roleItems.value.length > 0) {
+    groups.push(roleItems.value)
+  }
+
+  groups.push(
     [
       {
         label: 'Editar perfil',
@@ -51,7 +106,9 @@ const userItems = computed<DropdownMenuItem[][]>(() => {
         color: 'error' as const,
       },
     ],
-  ]
+  )
+
+  return groups
 })
 
 const fullName = computed(() => {
