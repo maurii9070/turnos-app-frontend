@@ -13,6 +13,12 @@ const emit = defineEmits<{
 }>()
 
 const { fetchAppointmentById } = useAppointments()
+const { role } = useAuth()
+
+const CATEGORY_LABEL_MAP: Record<'Medical' | 'Receipt', string> = {
+  Medical: 'Archivo médico',
+  Receipt: 'Comprobante',
+}
 
 const STATUS_COLOR_MAP: Record<AppointmentStatus, StatusColor> = {
   PendingPayment: 'warning',
@@ -38,6 +44,17 @@ const isOpen = computed({
 const detail = ref<AppointmentDetail | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+
+const filteredFiles = computed(() => {
+  if (!detail.value)
+    return []
+  const files = detail.value.files
+  if (role.value === 'Doctor')
+    return files.filter(f => f.category === 'Medical')
+  if (role.value === 'Admin' || role.value === 'SuperAdmin')
+    return files.filter(f => f.category === 'Receipt')
+  return files
+})
 
 watch(isOpen, async (val) => {
   if (val && props.appointmentId) {
@@ -143,13 +160,13 @@ function formatFileSizeName(fileName: string): string {
           </div>
         </div>
 
-        <div v-if="detail.files && detail.files.length > 0">
+        <div v-if="filteredFiles.length > 0">
           <h3 class="mb-3 text-sm font-semibold text-default">
             Archivos adjuntos
           </h3>
           <div class="space-y-2">
             <a
-              v-for="file in detail.files"
+              v-for="file in filteredFiles"
               :key="file.id"
               :href="file.filePathOrUrl"
               target="_blank"
@@ -170,7 +187,7 @@ function formatFileSizeName(fileName: string): string {
                   {{ formatFileSizeName(file.fileName) }}
                 </p>
                 <p class="text-xs text-muted">
-                  {{ file.fileType }}
+                  {{ CATEGORY_LABEL_MAP[file.category] }}
                 </p>
               </div>
               <UIcon name="i-lucide-external-link" class="size-4 text-muted" />

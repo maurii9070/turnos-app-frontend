@@ -30,6 +30,14 @@ const items = computed<NavigationMenuItem[]>(() => {
     })
   }
 
+  if (user.value?.role === 'Doctor') {
+    navItems.push({
+      label: 'Mis Turnos',
+      icon: 'i-lucide-calendar-check',
+      to: '/doctores',
+    })
+  }
+
   if (user.value?.role === 'Admin' || user.value?.role === 'SuperAdmin') {
     navItems.push({
       label: 'Turnos pendientes',

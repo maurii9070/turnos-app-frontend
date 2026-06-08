@@ -1,4 +1,4 @@
-import type { UploadAppointmentFileResponse } from '~/types/appointment-files'
+import type { AppointmentFileCategory, UploadAppointmentFileResponse } from '~/types/appointment-files'
 import type { ApiResponse } from '~/types/auth'
 
 export function useAppointmentFiles() {
@@ -28,6 +28,8 @@ export function useAppointmentFiles() {
         .from(bucket)
         .getPublicUrl(path)
 
+      const category: AppointmentFileCategory = folder === 'patient-file' ? 'Receipt' : 'Medical'
+
       const response = await $api<ApiResponse<UploadAppointmentFileResponse>>(
         `/api/appointments/${appointmentId}/files`,
         {
@@ -36,6 +38,7 @@ export function useAppointmentFiles() {
             fileName: file.name,
             fileType: file.type,
             filePathOrUrl: urlData.publicUrl,
+            category,
           },
         },
       )

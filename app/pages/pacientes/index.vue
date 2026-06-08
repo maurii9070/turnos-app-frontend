@@ -82,10 +82,6 @@ function canCancel(status: AppointmentStatus): boolean {
   return status === 'PendingPayment'
 }
 
-function canView(status: AppointmentStatus): boolean {
-  return status === 'PendingReview' || status === 'Confirmed' || status === 'Completed'
-}
-
 function openDetail(id: string) {
   detailAppointmentId.value = id
   showDetail.value = true
@@ -212,7 +208,6 @@ onMounted(() => {
             @click="openUploader(row.original.id)"
           />
           <UButton
-            v-if="canView(row.original.status)"
             icon="i-lucide-eye"
             label="Ver"
             size="sm"

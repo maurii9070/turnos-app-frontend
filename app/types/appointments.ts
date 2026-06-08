@@ -28,6 +28,7 @@ export interface AppointmentFileResponse {
   filePathOrUrl: string
   fileName: string
   fileType: string
+  category: 'Medical' | 'Receipt'
   uploadedAt: string
 }
 
