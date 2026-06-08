@@ -51,6 +51,7 @@ const columns: TableColumn<MyAppointmentListItem>[] = [
   {
     id: 'doctor',
     header: 'Doctor',
+    accessorFn: row => `${row.doctorFirstName} ${row.doctorLastName}`,
   },
   {
     accessorKey: 'specialtyName',
@@ -136,6 +137,8 @@ async function handleCancel() {
   }
 }
 
+const globalFilter = ref('')
+
 onMounted(() => {
   loadAppointments()
 })
@@ -178,7 +181,12 @@ onMounted(() => {
       </template>
     </UAlert>
 
+    <div class="flex px-4 py-3.5 border-b border-accented">
+      <UInput v-model="globalFilter" class="max-w-sm" icon="i-lucide-search" placeholder="Buscar..." />
+    </div>
+
     <UTable
+      v-model:global-filter="globalFilter"
       :columns="columns"
       :data="appointments"
       :loading="loading"
@@ -205,6 +213,7 @@ onMounted(() => {
             label="Subir comprobante"
             size="sm"
             variant="ghost"
+            color="warning"
             @click="openUploader(row.original.id)"
           />
           <UButton
