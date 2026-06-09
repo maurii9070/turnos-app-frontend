@@ -18,6 +18,7 @@ const currentStep = ref(0)
 
 const { createAppointment } = useAppointments()
 const { createPayment } = usePayments()
+const { createAppointmentWithMercadoPago } = useMercadoPago()
 
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
@@ -102,6 +103,32 @@ async function confirmarTurno() {
   isSubmitting.value = true
 
   try {
+    if (turnoData.value.pago === 'MercadoPago') {
+      const { user } = useUsers()
+      const result = await createAppointmentWithMercadoPago({
+        doctorId: turnoData.value.doctor,
+        date: turnoData.value.fecha,
+        startTime: turnoData.value.hora,
+        payerEmail: user.value?.email ?? null,
+        payerFirstName: user.value?.firstName ?? null,
+        payerLastName: user.value?.lastName ?? null,
+      })
+
+      toast.add({
+        title: 'Turno creado',
+        description: 'Se abrirá Mercado Pago en otra pestaña para que completes el pago.',
+        color: 'success',
+        duration: 4000,
+      })
+
+      await navigateTo('/pacientes')
+
+      if (import.meta.client) {
+        window.open(result.initPoint, '_blank')
+      }
+      return
+    }
+
     const appointment = await createAppointment({
       doctorId: turnoData.value.doctor,
       date: turnoData.value.fecha,

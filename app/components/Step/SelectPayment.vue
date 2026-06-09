@@ -38,15 +38,12 @@ const methods: PaymentOption[] = [
     id: 'MercadoPago',
     label: 'Mercado Pago',
     icon: 'i-lucide-wallet',
-    disabled: true,
-    description: 'Próximamente disponible.',
+    disabled: false,
+    description: 'Pagá online de forma rápida y segura con tarjeta, débito o efectivo.',
   },
 ]
 
 function selectMethod(methodId: PaymentMethod) {
-  if (methodId === 'MercadoPago') {
-    return
-  }
   emit('update:modelValue', methodId)
 }
 
@@ -144,6 +141,25 @@ function handleNext() {
           Una vez realizada la transferencia, deberás subir el comprobante
           para que la secretaria verifique el pago. El turno se confirmará
           cuando el pago sea aprobado.
+        </template>
+      </UAlert>
+    </div>
+
+    <div
+      v-if="modelValue === 'MercadoPago'"
+      class="rounded-xl border border-muted/50 bg-primary/5 p-5"
+    >
+      <UAlert
+        color="info"
+        icon="i-lucide-shield-check"
+      >
+        <template #title>
+          <span class="text-xs font-medium">Pago seguro</span>
+        </template>
+        <template #description>
+          Serás redirigido a Mercado Pago al confirmar el turno. Podés pagar
+          con tarjeta de crédito, débito o efectivo en puntos de pago. Tu turno
+          se confirmará automáticamente una vez realizado el pago.
         </template>
       </UAlert>
     </div>
