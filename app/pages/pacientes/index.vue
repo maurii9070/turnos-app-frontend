@@ -31,6 +31,8 @@ useHead({
 })
 
 const { fetchMyAppointments, cancelAppointment, loading } = useAppointments()
+const { syncMercadoPagoPayment, createMercadoPagoPreference } = useMercadoPago()
+const { user } = useUsers()
 const toast = useToast()
 
 const appointments = ref<MyAppointmentListItem[]>([])
@@ -85,6 +87,112 @@ function canUpload(row: MyAppointmentListItem): boolean {
 
 function canCancel(status: AppointmentStatus): boolean {
   return status === 'PendingPayment'
+}
+
+function isMercadoPagoPending(row: MyAppointmentListItem): boolean {
+  return row.status === 'PendingPayment' && row.paymentMethod === 'MercadoPago' && !!row.paymentId
+}
+
+const syncingPaymentIds = ref<Set<string>>(new Set())
+const retryingAppointmentIds = ref<Set<string>>(new Set())
+
+async function handleVerifyPayment(row: MyAppointmentListItem) {
+  if (!row.paymentId || syncingPaymentIds.value.has(row.paymentId))
+    return
+  syncingPaymentIds.value.add(row.paymentId)
+  try {
+    const result = await syncMercadoPagoPayment(row.paymentId)
+    if (result.appointmentConfirmed) {
+      toast.add({
+        title: 'Pago confirmado',
+        description: 'Tu turno fue reservado con éxito.',
+        color: 'success',
+      })
+      localStorage.removeItem('mercadopago:initPoint')
+      await loadAppointments()
+    }
+    else if (result.currentStatus === 'Rejected') {
+      toast.add({
+        title: 'Pago rechazado',
+        description: 'El pago no pudo completarse. Podés reintentarlo.',
+        color: 'error',
+      })
+    }
+    else {
+      toast.add({
+        title: 'Pago pendiente',
+        description: 'Tu pago aún está siendo procesado.',
+        color: 'warning',
+      })
+    }
+  }
+  catch (err: unknown) {
+    toast.add({
+      title: 'Error',
+      description: err instanceof Error ? err.message : 'Error al verificar el pago',
+      color: 'error',
+    })
+  }
+  finally {
+    if (row.paymentId) {
+      syncingPaymentIds.value.delete(row.paymentId)
+    }
+  }
+}
+
+async function handleRetryPayment(row: MyAppointmentListItem) {
+  if (retryingAppointmentIds.value.has(row.id))
+    return
+  retryingAppointmentIds.value.add(row.id)
+
+  const savedInitPoint = localStorage.getItem('mercadopago:initPoint')
+
+  if (savedInitPoint) {
+    localStorage.setItem('mercadopago:paymentId', row.paymentId ?? '')
+    localStorage.setItem('mercadopago:appointmentId', row.id)
+    toast.add({
+      title: 'Reintentar pago',
+      description: 'Se abrirá Mercado Pago en otra pestaña.',
+      color: 'info',
+    })
+    if (import.meta.client) {
+      window.open(savedInitPoint, '_blank')
+    }
+    retryingAppointmentIds.value.delete(row.id)
+    return
+  }
+
+  try {
+    const result = await createMercadoPagoPreference(row.id, {
+      payerEmail: user.value?.email ?? null,
+      payerFirstName: user.value?.firstName ?? null,
+      payerLastName: user.value?.lastName ?? null,
+    })
+
+    localStorage.setItem('mercadopago:paymentId', result.paymentId)
+    localStorage.setItem('mercadopago:appointmentId', result.appointmentId)
+    localStorage.setItem('mercadopago:initPoint', result.initPoint)
+
+    toast.add({
+      title: 'Nuevo intento de pago',
+      description: 'Se abrirá Mercado Pago en otra pestaña.',
+      color: 'info',
+    })
+
+    if (import.meta.client) {
+      window.open(result.initPoint, '_blank')
+    }
+  }
+  catch (err: unknown) {
+    toast.add({
+      title: 'Error',
+      description: err instanceof Error ? err.message : 'Error al reintentar el pago',
+      color: 'error',
+    })
+  }
+  finally {
+    retryingAppointmentIds.value.delete(row.id)
+  }
 }
 
 function openDetail(id: string) {
@@ -219,6 +327,26 @@ onMounted(() => {
             variant="ghost"
             color="warning"
             @click="openUploader(row.original.id)"
+          />
+          <UButton
+            v-if="isMercadoPagoPending(row.original)"
+            icon="i-lucide-refresh-cw"
+            label="Verificar pago"
+            size="sm"
+            variant="ghost"
+            color="warning"
+            :loading="row.original.paymentId ? syncingPaymentIds.has(row.original.paymentId) : false"
+            @click="handleVerifyPayment(row.original)"
+          />
+          <UButton
+            v-if="isMercadoPagoPending(row.original)"
+            icon="i-lucide-wallet"
+            label="Reintentar pago"
+            size="sm"
+            variant="ghost"
+            color="info"
+            :loading="retryingAppointmentIds.has(row.original.id)"
+            @click="handleRetryPayment(row.original)"
           />
           <UButton
             icon="i-lucide-eye"

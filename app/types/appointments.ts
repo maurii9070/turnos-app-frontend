@@ -85,6 +85,7 @@ export interface MyAppointmentListItem {
   status: AppointmentStatus
   notes: string | null
   paymentMethod?: PaymentMethod | null
+  paymentId?: string | null
 }
 
 export type PaymentMethod = 'MercadoPago' | 'Transfer' | 'Cash'

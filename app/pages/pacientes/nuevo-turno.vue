@@ -124,6 +124,9 @@ async function confirmarTurno() {
       await navigateTo('/pacientes')
 
       if (import.meta.client) {
+        localStorage.setItem('mercadopago:paymentId', result.paymentId)
+        localStorage.setItem('mercadopago:appointmentId', result.appointmentId)
+        localStorage.setItem('mercadopago:initPoint', result.initPoint)
         window.open(result.initPoint, '_blank')
       }
       return
