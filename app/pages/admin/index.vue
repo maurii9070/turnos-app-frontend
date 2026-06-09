@@ -26,6 +26,10 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Turnos Pendientes',
+})
+
 const { fetchAppointments, confirmAppointment, cancelAppointment } = useAppointments()
 const toast = useToast()
 

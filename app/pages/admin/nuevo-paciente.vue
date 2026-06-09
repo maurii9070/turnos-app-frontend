@@ -70,6 +70,10 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Registrar Paciente',
+})
+
 const { createPatient } = usePatients()
 const toast = useToast()
 const form = useTemplateRef('form')

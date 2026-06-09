@@ -3,6 +3,10 @@ definePageMeta({
   layout: 'default',
 })
 
+useHead({
+  title: 'Inicio - Turnos Médicos',
+})
+
 const features = [
   {
     title: 'Elegí tu especialista',

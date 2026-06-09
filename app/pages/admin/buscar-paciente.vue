@@ -7,6 +7,10 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Buscar Paciente',
+})
+
 const { fetchPatientByDni } = usePatients()
 
 const dni = ref('')

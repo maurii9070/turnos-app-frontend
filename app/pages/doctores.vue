@@ -21,9 +21,24 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Panel del Doctor',
+})
+
 const { fetchMyDoctorAppointments, loading } = useDoctors()
 const { completeAppointment } = useAppointments()
+const { user } = useUsers()
 const toast = useToast()
+
+const doctorId = computed(() => user.value?.doctorId ?? '')
+
+const tabs = [
+  { key: 'appointments', label: 'Mis Turnos', icon: 'i-lucide-calendar-check' },
+  { key: 'schedules', label: 'Mis Horarios', icon: 'i-lucide-clock' },
+  { key: 'availabilities', label: 'Excepciones', icon: 'i-lucide-calendar-x' },
+] as const
+
+const activeTab = ref<string>('appointments')
 
 const appointments = ref<DoctorMyAppointmentListItem[]>([])
 const error = ref<string | null>(null)
@@ -143,130 +158,159 @@ const globalFilter = ref('')
   <div class="space-y-6">
     <div>
       <h1 class="text-2xl font-semibold">
-        Mis Turnos
+        Panel del doctor
       </h1>
       <p class="mt-1 text-muted">
-        Gestioná tus turnos médicos asignados.
+        Gestioná tus turnos, horarios y días de excepción.
       </p>
     </div>
 
-    <UAlert
-      v-if="error"
-      color="error"
-      variant="subtle"
-      title="Error"
-      icon="i-lucide-alert-circle"
-      :description="error"
-    >
-      <template #footer>
-        <UButton
-          label="Reintentar"
-          size="sm"
-          variant="outline"
-          @click="loadAppointments"
-        />
-      </template>
-    </UAlert>
-
-    <div class="flex px-4 py-3.5 border-b border-accented">
-      <UInput v-model="globalFilter" class="max-w-sm" icon="i-lucide-search" placeholder="Buscar..." />
+    <div class="flex border-b border-default">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors"
+        :class="activeTab === tab.key
+          ? 'border-primary text-primary'
+          : 'border-transparent text-muted hover:text-default'"
+        @click="activeTab = tab.key"
+      >
+        <UIcon :name="tab.icon" class="size-4" />
+        {{ tab.label }}
+      </button>
     </div>
-    <UTable
-      v-model:global-filter="globalFilter"
-      :columns="columns"
-      :data="appointments"
-      :loading="loading"
-    >
-      <template #date-cell="{ row }">
-        {{ formatIsoDate(row.original.date) }}
-      </template>
 
-      <template #patient-cell="{ row }">
-        {{ row.original.patientFirstName }} {{ row.original.patientLastName }}
-      </template>
-
-      <template #status-cell="{ row }">
-        <UBadge :color="getStatusColor(row.original.status)">
-          {{ getStatusLabel(row.original.status) }}
-        </UBadge>
-      </template>
-
-      <template #actions-cell="{ row }">
-        <div class="flex items-center gap-1">
+    <div v-if="activeTab === 'appointments'">
+      <UAlert
+        v-if="error"
+        color="error"
+        variant="subtle"
+        title="Error"
+        icon="i-lucide-alert-circle"
+        :description="error"
+      >
+        <template #footer>
           <UButton
-            icon="i-lucide-eye"
-            color="primary"
-            label="Ver"
+            label="Reintentar"
             size="sm"
-            variant="ghost"
-            @click="openDetail(row.original.id)"
+            variant="outline"
+            @click="loadAppointments"
           />
+        </template>
+      </UAlert>
+
+      <div class="flex px-4 py-3.5 border-b border-accented">
+        <UInput v-model="globalFilter" class="max-w-sm" icon="i-lucide-search" placeholder="Buscar..." />
+      </div>
+      <UTable
+        v-model:global-filter="globalFilter"
+        :columns="columns"
+        :data="appointments"
+        :loading="loading"
+      >
+        <template #date-cell="{ row }">
+          {{ formatIsoDate(row.original.date) }}
+        </template>
+
+        <template #patient-cell="{ row }">
+          {{ row.original.patientFirstName }} {{ row.original.patientLastName }}
+        </template>
+
+        <template #status-cell="{ row }">
+          <UBadge :color="getStatusColor(row.original.status)">
+            {{ getStatusLabel(row.original.status) }}
+          </UBadge>
+        </template>
+
+        <template #actions-cell="{ row }">
+          <div class="flex items-center gap-1">
+            <UButton
+              icon="i-lucide-eye"
+              color="primary"
+              label="Ver"
+              size="sm"
+              variant="ghost"
+              @click="openDetail(row.original.id)"
+            />
+            <UButton
+              icon="i-lucide-upload"
+              label="Subir archivo"
+              color="neutral"
+              size="sm"
+              variant="ghost"
+              @click="openUploader(row.original.id)"
+            />
+            <UButton
+              v-if="canComplete(row.original.status)"
+              icon="i-lucide-check"
+              label="Completar"
+              size="sm"
+              color="success"
+              variant="ghost"
+              @click="confirmComplete(row.original.id)"
+            />
+          </div>
+        </template>
+
+        <template #empty>
+          <div class="flex flex-col items-center py-8">
+            <UIcon name="i-lucide-calendar-x" class="size-12 text-muted" />
+            <p class="mt-2 font-medium">
+              No tenés turnos
+            </p>
+            <p class="text-sm text-muted">
+              Todavía no tenés turnos médicos asignados.
+            </p>
+          </div>
+        </template>
+      </UTable>
+
+      <AppointmentDetailModal
+        v-if="detailAppointmentId"
+        v-model="showDetail"
+        :appointment-id="detailAppointmentId"
+      />
+
+      <AppointmentFileUploader
+        v-model="showUploader"
+        :appointment-id="selectedAppointmentId ?? ''"
+        role="doctor"
+        @uploaded="loadAppointments()"
+      />
+
+      <UModal
+        v-model:open="showCompleteConfirm"
+        title="Completar turno"
+        description="¿Estás seguro de que querés marcar este turno como completado?"
+        :ui="{ footer: 'justify-end' }"
+      >
+        <template #footer="{ close }">
           <UButton
-            icon="i-lucide-upload"
-            label="Subir archivo"
+            label="No, mantener"
             color="neutral"
-            size="sm"
-            variant="ghost"
-            @click="openUploader(row.original.id)"
+            variant="outline"
+            @click="close"
           />
           <UButton
-            v-if="canComplete(row.original.status)"
-            icon="i-lucide-check"
-            label="Completar"
-            size="sm"
+            label="Sí, completar"
             color="success"
-            variant="ghost"
-            @click="confirmComplete(row.original.id)"
+            :loading="completing"
+            @click="handleComplete"
           />
-        </div>
-      </template>
+        </template>
+      </UModal>
+    </div>
 
-      <template #empty>
-        <div class="flex flex-col items-center py-8">
-          <UIcon name="i-lucide-calendar-x" class="size-12 text-muted" />
-          <p class="mt-2 font-medium">
-            No tenés turnos
-          </p>
-          <p class="text-sm text-muted">
-            Todavía no tenés turnos médicos asignados.
-          </p>
-        </div>
-      </template>
-    </UTable>
+    <div v-if="activeTab === 'schedules' && doctorId">
+      <DoctorScheduleEditor :doctor-id="doctorId" />
+    </div>
 
-    <AppointmentDetailModal
-      v-if="detailAppointmentId"
-      v-model="showDetail"
-      :appointment-id="detailAppointmentId"
-    />
+    <div v-if="activeTab === 'availabilities' && doctorId">
+      <DoctorAvailabilityManager :doctor-id="doctorId" />
+    </div>
 
-    <AppointmentFileUploader
-      v-model="showUploader"
-      :appointment-id="selectedAppointmentId ?? ''"
-      role="doctor"
-      @uploaded="loadAppointments()"
-    />
-
-    <UModal
-      v-model:open="showCompleteConfirm"
-      title="Completar turno"
-      description="¿Estás seguro de que querés marcar este turno como completado?"
-      :ui="{ footer: 'justify-end' }"
-    >
-      <template #footer="{ close }">
-        <UButton
-          label="No, mantener"
-          color="neutral"
-          variant="outline"
-          @click="close"
-        />
-        <UButton
-          label="Sí, completar"
-          color="success"
-          :loading="completing"
-          @click="handleComplete"
-        />
-      </template>
-    </UModal>
+    <div v-if="(activeTab === 'schedules' || activeTab === 'availabilities') && !doctorId" class="flex justify-center py-12">
+      <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
+    </div>
   </div>
 </template>

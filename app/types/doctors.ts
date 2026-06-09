@@ -68,3 +68,94 @@ export interface DoctorMyAppointmentListItem {
   status: AppointmentStatus
   notes: string | null
 }
+
+export interface CreateDoctorRequest {
+  dni: string
+  firstName: string
+  lastName: string
+  password: string
+  specialtyId: string
+  licenseNumber: string
+  consultationPrice: number
+  email?: string | null
+  phone?: string | null
+}
+
+export interface CreateDoctorResponse {
+  doctorId: string
+  userId: string
+  dni: string
+  firstName: string
+  lastName: string
+  role: string
+  mustChangePassword: boolean
+  createdAt: string
+}
+
+export interface UpdateDoctorRequest {
+  specialtyId: string
+  licenseNumber: string
+  consultationPrice: number
+}
+
+export interface UpdateDoctorResponse {
+  doctorId: string
+  userId: string
+  dni: string
+  firstName: string
+  lastName: string
+  email: string | null
+  phone: string | null
+  specialty: SpecialtyInfo
+  licenseNumber: string
+  consultationPrice: number
+}
+
+export interface SetScheduleItem {
+  dayOfWeek: string
+  startTime: string
+  endTime: string
+}
+
+export interface SetSchedulesRequest {
+  schedules: SetScheduleItem[]
+}
+
+export interface SetSchedulesResponse {
+  id: string
+  dayOfWeek: string
+  startTime: string
+  endTime: string
+}
+
+export interface CreateAvailabilityRequest {
+  date: string
+  startTime: string
+  endTime: string
+  isAvailable: boolean
+}
+
+export interface CreateAvailabilityResponse {
+  id: string
+  doctorId: string
+  date: string
+  startTime: string
+  endTime: string
+  isAvailable: boolean
+}
+
+export interface UpdateAvailabilityRequest {
+  date: string
+  startTime: string
+  endTime: string
+  isAvailable: boolean
+}
+
+export interface UpdateAvailabilityResponse {
+  id: string
+  doctorId: string
+  date: string
+  startTime: string
+  endTime: string
+  isAvailable: boolean
+}

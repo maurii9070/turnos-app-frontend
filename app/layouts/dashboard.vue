@@ -62,6 +62,16 @@ const items = computed<NavigationMenuItem[]>(() => {
       icon: 'i-lucide-shield-plus',
       to: '/admin/nuevo-admin',
     })
+    navItems.push({
+      label: 'Registrar doctor',
+      icon: 'i-lucide-stethoscope',
+      to: '/admin/nuevo-doctor',
+    })
+    navItems.push({
+      label: 'Gestionar doctores',
+      icon: 'i-lucide-users',
+      to: '/admin/doctores',
+    })
   }
 
   navItems.push(

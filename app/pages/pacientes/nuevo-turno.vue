@@ -9,6 +9,10 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Nuevo Turno',
+})
+
 const toast = useToast()
 const currentStep = ref(0)
 

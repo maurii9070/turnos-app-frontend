@@ -1,5 +1,14 @@
 import type { ApiResponse } from '~/types/auth'
-import type { DoctorAppointment, DoctorDetail, DoctorListItem, DoctorMyAppointmentListItem } from '~/types/doctors'
+import type {
+  CreateDoctorRequest,
+  CreateDoctorResponse,
+  DoctorAppointment,
+  DoctorDetail,
+  DoctorListItem,
+  DoctorMyAppointmentListItem,
+  UpdateDoctorRequest,
+  UpdateDoctorResponse,
+} from '~/types/doctors'
 
 export function useDoctors() {
   const { $api } = useNuxtApp()
@@ -79,11 +88,71 @@ export function useDoctors() {
     }
   }
 
+  async function createDoctor(data: CreateDoctorRequest): Promise<CreateDoctorResponse> {
+    loading.value = true
+    try {
+      const response = await $api<ApiResponse<CreateDoctorResponse>>('/api/doctors', {
+        method: 'POST',
+        body: data,
+      })
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message ?? 'Error al crear el doctor')
+      }
+
+      return response.data
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  async function updateDoctor(
+    doctorId: string,
+    data: UpdateDoctorRequest,
+  ): Promise<UpdateDoctorResponse> {
+    loading.value = true
+    try {
+      const response = await $api<ApiResponse<UpdateDoctorResponse>>(`/api/doctors/${doctorId}`, {
+        method: 'PUT',
+        body: data,
+      })
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message ?? 'Error al actualizar el doctor')
+      }
+
+      return response.data
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  async function deleteDoctor(doctorId: string): Promise<void> {
+    loading.value = true
+    try {
+      const response = await $api<ApiResponse<object>>(`/api/doctors/${doctorId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.success) {
+        throw new Error(response.message ?? 'Error al desactivar el doctor')
+      }
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     fetchDoctors,
     fetchDoctorById,
     fetchDoctorAppointments,
     fetchMyDoctorAppointments,
+    createDoctor,
+    updateDoctor,
+    deleteDoctor,
   }
 }

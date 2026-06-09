@@ -65,6 +65,10 @@ definePageMeta({
   layout: 'dashboard',
 })
 
+useHead({
+  title: 'Registrar Administrador',
+})
+
 const { createAdmin } = useAdmins()
 const toast = useToast()
 const form = useTemplateRef('form')
