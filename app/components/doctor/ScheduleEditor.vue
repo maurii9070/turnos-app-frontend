@@ -19,8 +19,6 @@ const DAYS = [
   { key: 'Wednesday', label: 'Miércoles' },
   { key: 'Thursday', label: 'Jueves' },
   { key: 'Friday', label: 'Viernes' },
-  { key: 'Saturday', label: 'Sábado' },
-  { key: 'Sunday', label: 'Domingo' },
 ] as const
 
 const { fetchSchedules, setSchedules, loading } = useDoctorSchedules()

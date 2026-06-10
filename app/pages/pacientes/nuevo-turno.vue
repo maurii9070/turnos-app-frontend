@@ -76,6 +76,36 @@ function canAdvance(stepIndex: number): boolean {
   }
 }
 
+function canAdvanceToStep(targetStep: number): boolean {
+  if (targetStep <= currentStep.value)
+    return true
+
+  if (targetStep !== currentStep.value + 1)
+    return false
+
+  return canAdvance(currentStep.value)
+}
+
+function onStepClick(step: string | number | undefined) {
+  if (step === undefined)
+    return
+
+  const target = typeof step === 'number' ? step : Number.parseInt(step, 10)
+
+  if (Number.isNaN(target))
+    return
+
+  if (!canAdvanceToStep(target)) {
+    toast.add({
+      title: 'Completá este paso',
+      description: 'Completá el paso actual antes de continuar.',
+      color: 'warning',
+    })
+    return
+  }
+  currentStep.value = target
+}
+
 function nextStep() {
   if (!canAdvance(currentStep.value)) {
     toast.add({
@@ -90,8 +120,21 @@ function nextStep() {
 }
 
 function prevStep() {
-  if (currentStep.value > 0)
-    currentStep.value--
+  if (currentStep.value <= 0)
+    return
+
+  const targetStep = currentStep.value - 1
+
+  if (targetStep === 0) {
+    turnoData.value.fecha = null
+    turnoData.value.hora = null
+    turnoData.value.pago = null
+  }
+  else if (targetStep === 1) {
+    turnoData.value.pago = null
+  }
+
+  currentStep.value = targetStep
 }
 
 async function confirmarTurno() {
@@ -187,7 +230,7 @@ async function confirmarTurno() {
 
     <div class="rounded-xl border border-default bg-elevated/25 p-6 md:p-8">
       <UStepper
-        v-model="currentStep"
+        :model-value="currentStep"
         :items="items"
         orientation="horizontal"
         :ui="{
@@ -195,6 +238,7 @@ async function confirmarTurno() {
           description: 'max-md:hidden',
           title: 'text-sm max-sm:text-xs',
         }"
+        @update:model-value="onStepClick"
       >
         <template #doctor>
           <Transition name="step" mode="out-in">

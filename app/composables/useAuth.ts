@@ -84,6 +84,40 @@ export function useAuth() {
     }
   }
 
+  async function refreshToken(): Promise<boolean> {
+    accessToken.value = null
+    role.value = null
+    const config = useRuntimeConfig()
+    const headers: Record<string, string> = {}
+    if (import.meta.server) {
+      const cookieHeader = useRequestHeaders(['cookie']).cookie
+      if (cookieHeader)
+        headers.cookie = cookieHeader
+    }
+    try {
+      const response = await $fetch<{
+        success: boolean
+        message: string
+        data: { accessToken: string, role: UserRole }
+      }>('/api/auth/refresh', {
+        baseURL: config.public.apiBaseUrl,
+        method: 'POST',
+        credentials: 'include',
+        headers,
+      })
+      if (response.success && response.data) {
+        accessToken.value = response.data.accessToken
+        role.value = response.data.role
+        await fetchProfile()
+        return true
+      }
+      return false
+    }
+    catch {
+      return false
+    }
+  }
+
   return {
     accessToken,
     role,
@@ -92,5 +126,6 @@ export function useAuth() {
     register,
     logout,
     init,
+    refreshToken,
   }
 }

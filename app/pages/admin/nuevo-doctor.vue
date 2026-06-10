@@ -84,7 +84,6 @@ useHead({
 })
 
 const { createDoctor } = useDoctors()
-const { setSchedules } = useDoctorSchedules()
 const { fetchSpecialties } = useSpecialties()
 const toast = useToast()
 const form = useTemplateRef('form')
@@ -103,26 +102,6 @@ const state = reactive<Partial<DoctorCreateOutput>>({
   password: '',
   confirmPassword: '',
 })
-
-const DAYS = [
-  { key: 'Monday', label: 'Lunes' },
-  { key: 'Tuesday', label: 'Martes' },
-  { key: 'Wednesday', label: 'Miércoles' },
-  { key: 'Thursday', label: 'Jueves' },
-  { key: 'Friday', label: 'Viernes' },
-  { key: 'Saturday', label: 'Sábado' },
-  { key: 'Sunday', label: 'Domingo' },
-] as const
-
-const scheduleItems = ref<Array<{ key: string, label: string, enabled: boolean, startTime: string, endTime: string }>>(
-  DAYS.map(d => ({ key: d.key, label: d.label, enabled: false, startTime: '08:00', endTime: '17:00' })),
-)
-
-function toggleScheduleDay(item: { key: string, label: string, enabled: boolean, startTime: string, endTime: string }) {
-  item.enabled = !item.enabled
-}
-
-const showScheduleSection = ref(false)
 
 onMounted(async () => {
   try {
@@ -152,49 +131,13 @@ async function onSubmit(event: FormSubmitEvent<DoctorCreateOutput>) {
       email: event.data.email || null,
     })
 
-    const activeSchedules = scheduleItems.value
-      .filter(d => d.enabled)
-      .map(d => ({
-        dayOfWeek: d.key,
-        startTime: d.startTime,
-        endTime: d.endTime,
-      }))
-
-    if (activeSchedules.length > 0) {
-      try {
-        await setSchedules(result.doctorId, { schedules: activeSchedules })
-      }
-      catch (err: unknown) {
-        toast.add({
-          title: 'Advertencia',
-          description: `El doctor fue creado pero los horarios no pudieron guardarse: ${err instanceof Error ? err.message : 'Error desconocido'}`,
-          color: 'warning',
-        })
-      }
-    }
-
     toast.add({
       title: 'Doctor registrado',
-      description: `${result.firstName} ${result.lastName} fue registrado con éxito.`,
+      description: `${result.firstName} ${result.lastName} fue registrado con éxito. Ahora configurá sus horarios.`,
       color: 'success',
     })
 
-    state.dni = ''
-    state.firstName = ''
-    state.lastName = ''
-    state.specialtyId = ''
-    state.licenseNumber = ''
-    state.consultationPrice = 0
-    state.phone = ''
-    state.email = ''
-    state.password = ''
-    state.confirmPassword = ''
-
-    for (const item of scheduleItems.value) {
-      item.enabled = false
-    }
-
-    form.value?.clear()
+    await navigateTo(`/admin/doctores/${result.doctorId}`)
   }
   catch (error: any) {
     const message = error?.data?.message || error?.message || 'Error al registrar el doctor'
@@ -213,7 +156,7 @@ async function onSubmit(event: FormSubmitEvent<DoctorCreateOutput>) {
         Registrar doctor
       </h1>
       <p class="mt-1 text-muted">
-        Creá una cuenta para un nuevo doctor y configurá sus horarios.
+        Creá una cuenta para un nuevo doctor. Luego podrás configurar sus horarios.
       </p>
     </div>
 
@@ -327,53 +270,6 @@ async function onSubmit(event: FormSubmitEvent<DoctorCreateOutput>) {
               :disabled="loading"
             />
           </UFormField>
-        </div>
-
-        <UButton
-          type="button"
-          label="Configurar horarios"
-          :icon="showScheduleSection ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-          color="neutral"
-          variant="outline"
-          block
-          @click="showScheduleSection = !showScheduleSection"
-        />
-
-        <div v-if="showScheduleSection" class="rounded-xl border border-default bg-elevated/50 p-4 space-y-3">
-          <p class="text-sm text-muted">
-            Seleccioná los días y horarios de atención. Podés omitir esto y configurarlos después.
-          </p>
-
-          <div
-            v-for="item in scheduleItems"
-            :key="item.key"
-            class="flex flex-wrap items-center gap-3"
-          >
-            <div
-              class="flex items-center gap-2 min-w-28 cursor-pointer select-none"
-              @click="toggleScheduleDay(item)"
-            >
-              <USwitch :model-value="item.enabled" />
-              <span class="text-sm font-medium">{{ item.label }}</span>
-            </div>
-
-            <div
-              v-show="item.enabled"
-              class="flex items-center gap-2"
-            >
-              <input
-                v-model="item.startTime"
-                type="time"
-                class="h-9 rounded-md border border-default bg-default px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-              <span class="text-sm text-muted">a</span>
-              <input
-                v-model="item.endTime"
-                type="time"
-                class="h-9 rounded-md border border-default bg-default px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-            </div>
-          </div>
         </div>
 
         <UButton

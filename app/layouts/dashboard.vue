@@ -6,6 +6,8 @@ const { user, isProfileLoaded, fetchProfile } = useUsers()
 const { logout } = useAuth()
 const router = useRouter()
 
+const loggingOut = ref(false)
+
 const open = ref(true)
 
 const items = computed<NavigationMenuItem[]>(() => {
@@ -72,6 +74,11 @@ const items = computed<NavigationMenuItem[]>(() => {
       icon: 'i-lucide-users',
       to: '/admin/doctores',
     })
+    navItems.push({
+      label: 'Gestionar especialidades',
+      icon: 'i-lucide-tag',
+      to: '/admin/especialidades',
+    })
   }
 
   navItems.push(
@@ -103,8 +110,14 @@ watch([isProfileLoaded, user], ([loaded, u]) => {
 }, { immediate: true })
 
 async function handleLogout() {
-  await logout()
-  await navigateTo('/login')
+  loggingOut.value = true
+  try {
+    await logout()
+    await navigateTo('/login')
+  }
+  finally {
+    loggingOut.value = false
+  }
 }
 </script>
 
@@ -180,6 +193,8 @@ async function handleLogout() {
           color="error"
           variant="ghost"
           block
+          :loading="loggingOut"
+          :disabled="loggingOut"
           @click="handleLogout"
         />
       </template>

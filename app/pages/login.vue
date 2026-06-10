@@ -7,6 +7,8 @@ import { loginSchema } from '~/utils/schemas/auth'
 const toast = useToast()
 const { login, role, isAuthenticated } = useAuth()
 
+const loading = ref(false)
+
 definePageMeta({
   layout: 'auth',
 })
@@ -57,6 +59,7 @@ const roleRedirects: Record<UserRole, string> = {
 }
 
 async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
+  loading.value = true
   try {
     await login(payload.data.dni, payload.data.password)
     const target = role.value ? roleRedirects[role.value] : '/'
@@ -70,6 +73,9 @@ async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
       color: 'error',
     })
   }
+  finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -81,7 +87,8 @@ async function onSubmit(payload: FormSubmitEvent<LoginOutput>) {
     icon="i-lucide-lock"
     :providers="providers"
     :submit="{
-      label: 'Inicar Sesion',
+      label: 'Iniciar Sesión',
+      loading,
     }"
     @submit="onSubmit"
   >
