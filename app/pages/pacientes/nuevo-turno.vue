@@ -159,18 +159,16 @@ async function confirmarTurno() {
 
       toast.add({
         title: 'Turno creado',
-        description: 'Se abrirá Mercado Pago en otra pestaña para que completes el pago.',
+        description: 'Serás redirigido a Mercado Pago para completar el pago.',
         color: 'success',
         duration: 4000,
       })
-
-      await navigateTo('/pacientes')
 
       if (import.meta.client) {
         localStorage.setItem('mercadopago:paymentId', result.paymentId)
         localStorage.setItem('mercadopago:appointmentId', result.appointmentId)
         localStorage.setItem('mercadopago:initPoint', result.initPoint)
-        window.open(result.initPoint, '_blank')
+        window.location.href = result.initPoint
       }
       return
     }

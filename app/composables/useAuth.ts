@@ -1,10 +1,24 @@
 import type { LoginResponse, RegisterPatientRequest, UserRole } from '~/types/auth'
 
+interface StoredAuth {
+  token: string
+  role: UserRole
+}
+
 export function useAuth() {
   const { $api } = useNuxtApp()
+
   const accessToken = useState<string | null>('auth:token', () => null)
   const role = useState<UserRole | null>('auth:role', () => null)
   const isAuthenticated = computed(() => !!accessToken.value)
+
+  const authCookie = useCookie<StoredAuth | null>('auth-session', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 7,
+    sameSite: 'lax',
+    secure: true,
+    path: '/',
+  })
 
   const { fetchProfile } = useUsers()
 
@@ -24,6 +38,7 @@ export function useAuth() {
 
     accessToken.value = response.data.accessToken
     role.value = response.data.role
+    authCookie.value = { token: response.data.accessToken, role: response.data.role }
     await fetchProfile()
   }
 
@@ -50,11 +65,22 @@ export function useAuth() {
     accessToken.value = null
     role.value = null
     useState<unknown>('auth:user').value = null
+    authCookie.value = null
   }
 
   async function init() {
     if (accessToken.value)
       return
+
+    // Restore from cookie (works on both client and server)
+    const stored = authCookie.value
+    if (stored) {
+      accessToken.value = stored.token
+      role.value = stored.role
+      return
+    }
+
+    // No stored token — try the backend refresh cookie
     const config = useRuntimeConfig()
     const headers: Record<string, string> = {}
     if (import.meta.server) {
@@ -76,6 +102,7 @@ export function useAuth() {
       if (response.success && response.data) {
         accessToken.value = response.data.accessToken
         role.value = response.data.role
+        authCookie.value = { token: response.data.accessToken, role: response.data.role }
         await fetchProfile()
       }
     }
@@ -108,6 +135,7 @@ export function useAuth() {
       if (response.success && response.data) {
         accessToken.value = response.data.accessToken
         role.value = response.data.role
+        authCookie.value = { token: response.data.accessToken, role: response.data.role }
         await fetchProfile()
         return true
       }

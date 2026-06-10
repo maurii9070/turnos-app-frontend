@@ -152,11 +152,11 @@ async function handleRetryPayment(row: MyAppointmentListItem) {
     localStorage.setItem('mercadopago:appointmentId', row.id)
     toast.add({
       title: 'Reintentar pago',
-      description: 'Se abrirá Mercado Pago en otra pestaña.',
+      description: 'Serás redirigido a Mercado Pago.',
       color: 'info',
     })
     if (import.meta.client) {
-      window.open(savedInitPoint, '_blank')
+      window.location.href = savedInitPoint
     }
     retryingAppointmentIds.value.delete(row.id)
     return
@@ -175,12 +175,12 @@ async function handleRetryPayment(row: MyAppointmentListItem) {
 
     toast.add({
       title: 'Nuevo intento de pago',
-      description: 'Se abrirá Mercado Pago en otra pestaña.',
+      description: 'Serás redirigido a Mercado Pago.',
       color: 'info',
     })
 
     if (import.meta.client) {
-      window.open(result.initPoint, '_blank')
+      window.location.href = result.initPoint
     }
   }
   catch (err: unknown) {
