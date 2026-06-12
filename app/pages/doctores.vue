@@ -269,6 +269,7 @@ const globalFilter = ref('')
         v-if="detailAppointmentId"
         v-model="showDetail"
         :appointment-id="detailAppointmentId"
+        @deleted="loadAppointments()"
       />
 
       <AppointmentFileUploader

@@ -16,3 +16,8 @@ export interface UploadAppointmentFileResponse {
   category: AppointmentFileCategory
   uploadedAt: string
 }
+
+export interface DeleteAppointmentFileResponse {
+  fileId: string
+  appointmentId: string
+}

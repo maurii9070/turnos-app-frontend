@@ -1,4 +1,4 @@
-import type { AppointmentFileCategory, UploadAppointmentFileResponse } from '~/types/appointment-files'
+import type { AppointmentFileCategory, DeleteAppointmentFileResponse, UploadAppointmentFileResponse } from '~/types/appointment-files'
 import type { ApiResponse } from '~/types/auth'
 
 export function useAppointmentFiles() {
@@ -54,8 +54,27 @@ export function useAppointmentFiles() {
     }
   }
 
+  async function deleteFile(
+    appointmentId: string,
+    fileId: string,
+  ): Promise<ApiResponse<DeleteAppointmentFileResponse>> {
+    loading.value = true
+    try {
+      const response = await $api<ApiResponse<DeleteAppointmentFileResponse>>(
+        `/api/appointments/${appointmentId}/files/${fileId}`,
+        { method: 'DELETE' },
+      )
+
+      return response
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     uploadFile,
+    deleteFile,
   }
 }

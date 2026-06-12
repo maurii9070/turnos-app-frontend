@@ -10,10 +10,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
+  'deleted': []
 }>()
 
 const { fetchAppointmentById } = useAppointments()
+const { deleteFile } = useAppointmentFiles()
 const { role } = useAuth()
+const toast = useToast()
 
 const CATEGORY_LABEL_MAP: Record<'Medical' | 'Receipt', string> = {
   Medical: 'Archivo médico',
@@ -56,6 +59,37 @@ const filteredFiles = computed(() => {
   return files
 })
 
+const deletableFileIds = computed(() => {
+  if (!detail.value)
+    return new Set<string>()
+  const files = detail.value.files
+  if (role.value === 'Admin' || role.value === 'SuperAdmin')
+    return new Set(files.map(f => f.id))
+  if (role.value === 'Patient')
+    return new Set(files.filter(f => f.category === 'Receipt').map(f => f.id))
+  if (role.value === 'Doctor')
+    return new Set(files.filter(f => f.category === 'Medical').map(f => f.id))
+  return new Set<string>()
+})
+
+const fileToDelete = ref<string | null>(null)
+const isDeleting = ref(false)
+
+const showDeleteConfirm = computed({
+  get: () => fileToDelete.value !== null,
+  set: (val) => {
+    if (!val)
+      fileToDelete.value = null
+  },
+})
+
+const fileToDeleteName = computed(() => {
+  if (!fileToDelete.value || !detail.value)
+    return ''
+  const file = detail.value.files.find(f => f.id === fileToDelete.value)
+  return file?.fileName ?? ''
+})
+
 watch(isOpen, async (val) => {
   if (val && props.appointmentId) {
     await loadDetail()
@@ -85,6 +119,53 @@ function formatFileSizeName(fileName: string): string {
     return `${fileName.slice(0, 37)}...`
   }
   return fileName
+}
+
+function canDeleteFile(fileId: string): boolean {
+  return deletableFileIds.value.has(fileId)
+}
+
+function confirmDelete(fileId: string) {
+  fileToDelete.value = fileId
+}
+
+async function handleDelete() {
+  if (!fileToDelete.value)
+    return
+
+  isDeleting.value = true
+  try {
+    const response = await deleteFile(props.appointmentId, fileToDelete.value)
+
+    if (response.success) {
+      toast.add({
+        title: 'Archivo eliminado',
+        description: response.message ?? 'Archivo eliminado correctamente.',
+        color: 'success',
+      })
+      fileToDelete.value = null
+      await loadDetail()
+      emit('deleted')
+    }
+    else {
+      toast.add({
+        title: 'Error',
+        description: response.message ?? 'Error al eliminar el archivo',
+        color: 'error',
+      })
+    }
+  }
+  catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error al eliminar el archivo'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
+  finally {
+    isDeleting.value = false
+  }
 }
 </script>
 
@@ -165,33 +246,46 @@ function formatFileSizeName(fileName: string): string {
             Archivos adjuntos
           </h3>
           <div class="space-y-2">
-            <a
+            <div
               v-for="file in filteredFiles"
               :key="file.id"
-              :href="file.filePathOrUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-3 rounded-xl border border-default bg-default p-3 transition-colors hover:bg-elevated"
+              class="flex items-center gap-2 rounded-xl border border-default bg-default p-3 transition-colors hover:bg-elevated"
             >
-              <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                :class="isImage(file.fileType) ? 'bg-primary/10 text-primary' : 'bg-elevated text-muted'"
+              <a
+                :href="file.filePathOrUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex min-w-0 flex-1 items-center gap-3"
               >
-                <UIcon
-                  :name="isImage(file.fileType) ? 'i-lucide-image' : 'i-lucide-file'"
-                  class="size-5"
-                />
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-default">
-                  {{ formatFileSizeName(file.fileName) }}
-                </p>
-                <p class="text-xs text-muted">
-                  {{ CATEGORY_LABEL_MAP[file.category] }}
-                </p>
-              </div>
-              <UIcon name="i-lucide-external-link" class="size-4 text-muted" />
-            </a>
+                <div
+                  class="flex size-10 shrink-0 items-center justify-center rounded-lg"
+                  :class="isImage(file.fileType) ? 'bg-primary/10 text-primary' : 'bg-elevated text-muted'"
+                >
+                  <UIcon
+                    :name="isImage(file.fileType) ? 'i-lucide-image' : 'i-lucide-file'"
+                    class="size-5"
+                  />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-default">
+                    {{ formatFileSizeName(file.fileName) }}
+                  </p>
+                  <p class="text-xs text-muted">
+                    {{ CATEGORY_LABEL_MAP[file.category] }}
+                  </p>
+                </div>
+                <UIcon name="i-lucide-external-link" class="size-4 shrink-0 text-muted" />
+              </a>
+              <UButton
+                v-if="canDeleteFile(file.id)"
+                icon="i-lucide-trash-2"
+                color="error"
+                variant="ghost"
+                size="sm"
+                :aria-label="`Eliminar ${file.fileName}`"
+                @click="confirmDelete(file.id)"
+              />
+            </div>
           </div>
         </div>
 
@@ -209,6 +303,28 @@ function formatFileSizeName(fileName: string): string {
 
     <template #footer="{ close }">
       <UButton label="Cerrar" color="neutral" variant="outline" @click="close" />
+    </template>
+  </UModal>
+
+  <UModal
+    v-model:open="showDeleteConfirm"
+    title="Eliminar archivo"
+    :description="fileToDeleteName ? `¿Estás seguro de que querés eliminar ${fileToDeleteName}? Esta acción no se puede deshacer.` : '¿Estás seguro de que querés eliminar este archivo? Esta acción no se puede deshacer.'"
+    :ui="{ footer: 'justify-end' }"
+  >
+    <template #footer="{ close }">
+      <UButton
+        label="Cancelar"
+        color="neutral"
+        variant="outline"
+        @click="close"
+      />
+      <UButton
+        label="Eliminar"
+        color="error"
+        :loading="isDeleting"
+        @click="handleDelete"
+      />
     </template>
   </UModal>
 </template>
