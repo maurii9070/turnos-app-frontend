@@ -41,12 +41,28 @@ const fields: AuthFormField[] = [
   },
 ]
 
+const { $supabase } = useNuxtApp()
+
 const providers = [
   {
     label: 'Google',
     icon: 'i-simple-icons-google',
-    onClick: () => {
-      toast.add({ title: 'Google', description: 'Inicio de sesión con Google próximamente.' })
+    onClick: async () => {
+      const redirectTo = `${window.location.origin}/auth/callback`
+      const { error } = await $supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+        },
+      })
+
+      if (error) {
+        toast.add({
+          title: 'Error',
+          description: error.message || 'No se pudo iniciar sesión con Google.',
+          color: 'error',
+        })
+      }
     },
   },
 ]

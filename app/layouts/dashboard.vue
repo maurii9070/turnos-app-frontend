@@ -104,8 +104,18 @@ onMounted(async () => {
 })
 
 watch([isProfileLoaded, user], ([loaded, u]) => {
-  if (loaded && u?.mustChangePassword && router.currentRoute.value.path !== '/perfil/cambiar-password') {
+  if (!loaded || !u)
+    return
+
+  const currentPath = router.currentRoute.value.path
+
+  if (u.mustChangePassword && currentPath !== '/perfil/cambiar-password') {
     router.replace('/perfil/cambiar-password')
+    return
+  }
+
+  if (u.requiresDni && currentPath !== '/completar-dni') {
+    router.replace('/completar-dni')
   }
 }, { immediate: true })
 

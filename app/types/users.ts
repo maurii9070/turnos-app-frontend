@@ -2,13 +2,15 @@ import type { UserRole } from './auth'
 
 export interface UserProfile {
   userId: string
-  dni: string
+  dni: string | null
   email: string | null
+  googleId: string | null
   firstName: string
   lastName: string
   phone: string | null
   role: UserRole
   mustChangePassword: boolean
+  requiresDni: boolean
   patientId: string | null
   dateOfBirth: string | null
   doctorId: string | null

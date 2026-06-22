@@ -13,6 +13,7 @@ useSeoMeta({
   description: 'Actualizá tu información personal',
 })
 
+const { $supabase } = useNuxtApp()
 const toast = useToast()
 const { user, loading, updateProfile, fetchProfile } = useUsers()
 
@@ -38,6 +39,31 @@ onMounted(async () => {
     state.dateOfBirth = user.value.dateOfBirth || ''
   }
 })
+
+async function linkGoogle() {
+  try {
+    localStorage.setItem('google-link-mode', 'true')
+    const redirectTo = `${window.location.origin}/auth/callback`
+    const { error } = await $supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    })
+
+    if (error) {
+      localStorage.removeItem('google-link-mode')
+      throw error
+    }
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Error',
+      description: error?.message || 'No se pudo iniciar el proceso de vinculación.',
+      color: 'error',
+    })
+  }
+}
 
 async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
   try {
@@ -109,6 +135,24 @@ async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {
         :loading="loading"
         block
       />
+
+      <USeparator label="Cuenta de Google" />
+
+      <div v-if="user" class="space-y-3">
+        <UButton
+          v-if="!user.googleId"
+          label="Vincular con Google"
+          icon="i-simple-icons-google"
+          color="neutral"
+          variant="outline"
+          block
+          @click="linkGoogle"
+        />
+        <div v-else class="flex items-center justify-center gap-2 text-sm text-success">
+          <UIcon name="i-lucide-check-circle" />
+          <span>Cuenta de Google vinculada</span>
+        </div>
+      </div>
 
       <p v-if="user" class="text-center text-sm text-muted">
         <ULink :to="selectRouteByRole(user.role)" class="font-medium">
