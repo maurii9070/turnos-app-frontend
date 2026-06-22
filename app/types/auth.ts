@@ -26,16 +26,20 @@ export interface RegisterPatientRequest {
 
 export interface RegisterPatientResponse {
   id: string
-  dni: string
+  dni: string | null
   firstName: string
   lastName: string
   role: string
   createdAt: string
 }
 
+export interface GoogleLoginRequest {
+  supabaseToken: string
+}
+
 export interface AuthUser {
   id: string
-  dni: string
+  dni: string | null
   firstName: string
   lastName: string
   role: UserRole

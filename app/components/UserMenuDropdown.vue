@@ -10,7 +10,34 @@ const emit = defineEmits<{
   logout: []
 }>()
 
+const { $supabase } = useNuxtApp()
+const toast = useToast()
 const { user } = useUsers()
+
+async function linkGoogle() {
+  try {
+    localStorage.setItem('google-link-mode', 'true')
+    const redirectTo = `${window.location.origin}/auth/callback`
+    const { error } = await $supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+      },
+    })
+
+    if (error) {
+      localStorage.removeItem('google-link-mode')
+      throw error
+    }
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Error',
+      description: error?.message || 'No se pudo iniciar el proceso de vinculación.',
+      color: 'error',
+    })
+  }
+}
 
 const roleItems = computed<DropdownMenuItem[]>(() => {
   if (!user.value)
@@ -99,6 +126,13 @@ const userItems = computed<DropdownMenuItem[][]>(() => {
       {
         type: 'separator' as const,
       },
+      ...(user.value.googleId
+        ? []
+        : [{
+            label: 'Vincular con Google',
+            icon: 'i-simple-icons-google',
+            onClick: () => linkGoogle(),
+          }]),
       {
         label: 'Cerrar sesión',
         icon: 'i-lucide-log-out',

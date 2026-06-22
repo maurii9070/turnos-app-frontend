@@ -1,4 +1,4 @@
-import type { LoginResponse, RegisterPatientRequest, UserRole } from '~/types/auth'
+import type { GoogleLoginRequest, LoginResponse, RegisterPatientRequest, UserRole } from '~/types/auth'
 
 interface StoredAuth {
   token: string
@@ -40,6 +40,62 @@ export function useAuth() {
     role.value = response.data.role
     authCookie.value = { token: response.data.accessToken, role: response.data.role }
     await fetchProfile()
+  }
+
+  async function loginWithGoogle(supabaseToken: string) {
+    const response = await $api<{
+      success: boolean
+      message: string
+      data: LoginResponse
+    }>('/api/auth/google', {
+      method: 'POST',
+      body: { supabaseToken } satisfies GoogleLoginRequest,
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Error al iniciar sesión con Google')
+    }
+
+    accessToken.value = response.data.accessToken
+    role.value = response.data.role
+    authCookie.value = { token: response.data.accessToken, role: response.data.role }
+    await fetchProfile()
+  }
+
+  async function completeDni(dni: string) {
+    const response = await $api<{
+      success: boolean
+      message: string
+      data: { userId: string, dni: string }
+    }>('/api/auth/complete-dni', {
+      method: 'POST',
+      body: { dni },
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Error al guardar el DNI')
+    }
+
+    await fetchProfile()
+    return response.data
+  }
+
+  async function linkGoogle(supabaseToken: string) {
+    const response = await $api<{
+      success: boolean
+      message: string
+      data: { userId: string, googleId: string | null }
+    }>('/api/users/link-google', {
+      method: 'POST',
+      body: { supabaseToken },
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Error al vincular la cuenta de Google')
+    }
+
+    await fetchProfile()
+    return response.data
   }
 
   async function register(data: RegisterPatientRequest) {
@@ -151,6 +207,9 @@ export function useAuth() {
     role,
     isAuthenticated,
     login,
+    loginWithGoogle,
+    completeDni,
+    linkGoogle,
     register,
     logout,
     init,
