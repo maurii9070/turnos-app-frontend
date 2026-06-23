@@ -6,6 +6,7 @@ import { loginSchema } from '~/utils/schemas/auth'
 
 const toast = useToast()
 const { login, role, isAuthenticated } = useAuth()
+const { signInWithGoogle } = useGoogleAuth()
 
 const loading = ref(false)
 
@@ -41,29 +42,11 @@ const fields: AuthFormField[] = [
   },
 ]
 
-const { $supabase } = useNuxtApp()
-
 const providers = [
   {
     label: 'Google',
     icon: 'i-simple-icons-google',
-    onClick: async () => {
-      const redirectTo = `${window.location.origin}/auth/callback`
-      const { error } = await $supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-        },
-      })
-
-      if (error) {
-        toast.add({
-          title: 'Error',
-          description: error.message || 'No se pudo iniciar sesión con Google.',
-          color: 'error',
-        })
-      }
-    },
+    onClick: signInWithGoogle,
   },
 ]
 

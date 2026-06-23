@@ -13,9 +13,9 @@ useSeoMeta({
   description: 'Actualizá tu información personal',
 })
 
-const { $supabase } = useNuxtApp()
 const toast = useToast()
 const { user, loading, updateProfile, fetchProfile } = useUsers()
+const { signInWithGoogle } = useGoogleAuth()
 
 const form = useTemplateRef('form')
 
@@ -41,28 +41,9 @@ onMounted(async () => {
 })
 
 async function linkGoogle() {
-  try {
-    localStorage.setItem('google-link-mode', 'true')
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const { error } = await $supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo,
-      },
-    })
-
-    if (error) {
-      localStorage.removeItem('google-link-mode')
-      throw error
-    }
-  }
-  catch (error: any) {
-    toast.add({
-      title: 'Error',
-      description: error?.message || 'No se pudo iniciar el proceso de vinculación.',
-      color: 'error',
-    })
-  }
+  localStorage.setItem('google-link-mode', 'true')
+  await signInWithGoogle()
+  localStorage.removeItem('google-link-mode')
 }
 
 async function onSubmit(event: FormSubmitEvent<UpdateProfileOutput>) {

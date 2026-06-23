@@ -14,6 +14,7 @@ useSeoMeta({
 
 const toast = useToast()
 const { register } = useAuth()
+const { signInWithGoogle } = useGoogleAuth()
 
 const form = useTemplateRef('form')
 const loading = ref(false)
@@ -62,7 +63,7 @@ async function onSubmit(event: FormSubmitEvent<RegisterOutput>) {
       color="neutral"
       variant="outline"
       block
-      @click="toast.add({ title: 'Google', description: 'Registro con Google próximamente.' })"
+      @click="signInWithGoogle"
     />
     <USeparator label="o" />
   </div>
