@@ -13,13 +13,13 @@ definePageMeta({
 })
 
 onMounted(async () => {
-  // Clean Supabase OAuth hash to avoid Vue Router treating the access_token as a CSS selector.
-  if (window.location.hash) {
-    history.replaceState({}, '', window.location.pathname + window.location.search)
-  }
-
   try {
     const { data, error: sessionError } = await $supabase.auth.getSession()
+
+    // Clean the OAuth hash only after Supabase has read the session.
+    if (window.location.hash) {
+      history.replaceState({}, '', window.location.pathname + window.location.search)
+    }
 
     if (sessionError || !data.session) {
       throw new Error(sessionError?.message || 'No se pudo obtener la sesión de Google.')
