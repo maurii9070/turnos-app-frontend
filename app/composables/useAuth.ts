@@ -5,6 +5,25 @@ interface StoredAuth {
   role: UserRole
 }
 
+const REFRESH_TOKEN_KEY = 'auth:refresh-token'
+
+function getRefreshToken(): string | null {
+  if (import.meta.server)
+    return null
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
+}
+
+function setRefreshToken(token: string | null) {
+  if (import.meta.server)
+    return
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token)
+  }
+  else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+  }
+}
+
 export function useAuth() {
   const { $api } = useNuxtApp()
 
@@ -22,6 +41,21 @@ export function useAuth() {
 
   const { fetchProfile } = useUsers()
 
+  function setAuth(data: LoginResponse) {
+    accessToken.value = data.accessToken
+    role.value = data.role
+    authCookie.value = { token: data.accessToken, role: data.role }
+    setRefreshToken(data.refreshToken)
+  }
+
+  function clearAuth() {
+    accessToken.value = null
+    role.value = null
+    useState<unknown>('auth:user').value = null
+    authCookie.value = null
+    setRefreshToken(null)
+  }
+
   async function login(dni: string, password: string) {
     const response = await $api<{
       success: boolean
@@ -36,9 +70,7 @@ export function useAuth() {
       throw new Error(response.message || 'Error al iniciar sesión')
     }
 
-    accessToken.value = response.data.accessToken
-    role.value = response.data.role
-    authCookie.value = { token: response.data.accessToken, role: response.data.role }
+    setAuth(response.data)
     await fetchProfile()
   }
 
@@ -56,9 +88,7 @@ export function useAuth() {
       throw new Error(response.message || 'Error al iniciar sesión con Google')
     }
 
-    accessToken.value = response.data.accessToken
-    role.value = response.data.role
-    authCookie.value = { token: response.data.accessToken, role: response.data.role }
+    setAuth(response.data)
     await fetchProfile()
   }
 
@@ -113,15 +143,16 @@ export function useAuth() {
 
   async function logout() {
     try {
-      await $api('/api/auth/logout', { method: 'POST' })
+      const refreshToken = getRefreshToken()
+      await $api('/api/auth/logout', {
+        method: 'POST',
+        headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {},
+      })
     }
     catch {
       // Backend might error but we still clear local state
     }
-    accessToken.value = null
-    role.value = null
-    useState<unknown>('auth:user').value = null
-    authCookie.value = null
+    clearAuth()
   }
 
   async function init() {
@@ -136,68 +167,44 @@ export function useAuth() {
       return
     }
 
-    // No stored token — try the backend refresh cookie
-    const config = useRuntimeConfig()
-    const headers: Record<string, string> = {}
-    if (import.meta.server) {
-      const cookieHeader = useRequestHeaders(['cookie']).cookie
-      if (cookieHeader)
-        headers.cookie = cookieHeader
-    }
-    try {
-      const response = await $fetch<{
-        success: boolean
-        message: string
-        data: { accessToken: string, role: UserRole }
-      }>('/api/auth/refresh', {
-        baseURL: config.public.apiBaseUrl,
-        method: 'POST',
-        credentials: 'include',
-        headers,
-      })
-      if (response.success && response.data) {
-        accessToken.value = response.data.accessToken
-        role.value = response.data.role
-        authCookie.value = { token: response.data.accessToken, role: response.data.role }
-        await fetchProfile()
-      }
-    }
-    catch {
-      // No valid session to restore
-    }
+    // No stored token — try to refresh
+    await refreshToken()
   }
 
   async function refreshToken(): Promise<boolean> {
     accessToken.value = null
     role.value = null
     const config = useRuntimeConfig()
-    const headers: Record<string, string> = {}
-    if (import.meta.server) {
-      const cookieHeader = useRequestHeaders(['cookie']).cookie
-      if (cookieHeader)
-        headers.cookie = cookieHeader
+    const refreshToken = getRefreshToken()
+
+    if (!refreshToken) {
+      return false
     }
+
     try {
       const response = await $fetch<{
         success: boolean
         message: string
-        data: { accessToken: string, role: UserRole }
+        data: { accessToken: string, refreshToken: string, role: UserRole }
       }>('/api/auth/refresh', {
         baseURL: config.public.apiBaseUrl,
         method: 'POST',
-        credentials: 'include',
-        headers,
+        headers: {
+          'X-Refresh-Token': refreshToken,
+        },
       })
       if (response.success && response.data) {
         accessToken.value = response.data.accessToken
         role.value = response.data.role
         authCookie.value = { token: response.data.accessToken, role: response.data.role }
+        setRefreshToken(response.data.refreshToken)
         await fetchProfile()
         return true
       }
       return false
     }
     catch {
+      clearAuth()
       return false
     }
   }
